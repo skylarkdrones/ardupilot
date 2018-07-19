@@ -49,7 +49,7 @@ public:
 
     // these functions should not be used by Copter which holds the armed state in the motors library
     ArmingRequired arming_required();
-    virtual bool arm(ArmingMethod method, bool do_arming_checks=true);
+    virtual bool arm(ArmingMethod method, bool do_arming_checks=true,bool key=false);
     bool disarm();
     bool is_armed();
 
@@ -107,7 +107,7 @@ protected:
     bool manual_transmitter_checks(bool report);
 
     virtual bool system_checks(bool report);
-    
+
     bool servo_checks(bool report) const;
     bool rc_checks_copter_sub(bool display_failure, const RC_Channel *channels[4], const bool check_min_max = true) const;
 

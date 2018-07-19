@@ -54,7 +54,7 @@ MAV_MODE GCS_MAVLINK_Plane::base_mode() const
     }
 
     if (!plane.training_manual_pitch || !plane.training_manual_roll) {
-        _base_mode |= MAV_MODE_FLAG_STABILIZE_ENABLED;        
+        _base_mode |= MAV_MODE_FLAG_STABILIZE_ENABLED;
     }
 
     if (plane.control_mode != MANUAL && plane.control_mode != INITIALISING) {
@@ -116,13 +116,13 @@ void GCS_MAVLINK_Plane::send_attitude() const
     float r = ahrs.roll;
     float p = ahrs.pitch - radians(plane.g.pitch_trim_cd*0.01f);
     float y = ahrs.yaw;
-    
+
     if (plane.quadplane.tailsitter_active()) {
         r = plane.quadplane.ahrs_view->roll;
         p = plane.quadplane.ahrs_view->pitch;
         y = plane.quadplane.ahrs_view->yaw;
     }
-    
+
     const Vector3f &omega = ahrs.get_gyro();
     mavlink_msg_attitude_send(
         chan,
@@ -163,7 +163,7 @@ void Plane::send_extended_status1(mavlink_channel_t chan)
     }
 
     update_sensor_status_flags();
-    
+
     mavlink_msg_sys_status_send(
         chan,
         control_sensors_present,
@@ -461,7 +461,7 @@ bool GCS_MAVLINK_Plane::try_send_message(enum ap_message id)
 
     case MSG_OPTICAL_FLOW:
 #if OPTFLOW == ENABLED
-        if (plane.optflow.enabled()) {        
+        if (plane.optflow.enabled()) {
             CHECK_PAYLOAD_SIZE(OPTICAL_FLOW);
             send_opticalflow(plane.optflow);
         }
@@ -697,7 +697,7 @@ bool GCS_MAVLINK_Plane::handle_guided_request(AP_Mission::Mission_Command &cmd)
         return false;
     }
     plane.guided_WP_loc = cmd.content.location;
-    
+
     // add home alt if needed
     if (plane.guided_WP_loc.flags.relative_alt) {
         plane.guided_WP_loc.alt += plane.home.alt;
@@ -761,6 +761,7 @@ bool GCS_MAVLINK_Plane::should_disable_overrides_on_reboot() const
 
 MAV_RESULT GCS_MAVLINK_Plane::handle_command_int_packet(const mavlink_command_int_t &packet)
 {
+
     switch(packet.command) {
 
     case MAV_CMD_DO_SET_HOME:
@@ -1112,6 +1113,25 @@ MAV_RESULT GCS_MAVLINK_Plane::handle_command_long_packet(const mavlink_command_l
 
 void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
 {
+  AP::fwversion().fw_string;
+  int icx=1;
+  int jcx=0;
+  char keyID[11];
+  while(AP::fwversion().fw_string[icx]!=NULL)
+  {
+    if(AP::fwversion().fw_string[icx-1] == '(')
+      {
+        while(AP::fwversion().fw_string[icx+1]!=')')
+        {
+          keyID[jcx]=AP::fwversion().fw_string[icx];
+          jcx++;
+          icx++;
+        }
+      }
+      icx++;
+    }
+
+
     switch (msg->msgid) {
 
 #if GEOFENCE_ENABLED == ENABLED
@@ -1212,7 +1232,7 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
         plane.failsafe.last_heartbeat_ms = tnow;
         break;
     }
-    
+
     case MAVLINK_MSG_ID_HEARTBEAT:
     {
         // We keep track of the last time we received a heartbeat from
@@ -1327,7 +1347,7 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
         // computer control is more safe (even more so when using
         // FENCE_ACTION = 4 for geofence failures).
         if (plane.control_mode != GUIDED && plane.control_mode != AVOID_ADSB) { // don't screw up failsafes
-            break; 
+            break;
         }
 
         mavlink_set_attitude_target_t att_target;
@@ -1429,7 +1449,7 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
         plane.next_WP_loc.alt += -packet.z*100.0;
         gcs().send_text(MAV_SEVERITY_INFO, "Change alt to %.1f",
                         (double)((plane.next_WP_loc.alt - plane.home.alt)*0.01));
-        
+
         break;
     }
 
@@ -1452,38 +1472,61 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
         // be IGNORNED rather than INCLUDED.  See mavlink documentation of the
         // SET_POSITION_TARGET_GLOBAL_INT message, type_mask field.
         const uint16_t alt_mask = 0b1111111111111011; // (z mask at bit 3)
-            
+
         bool msg_valid = true;
         AP_Mission::Mission_Command cmd = {0};
-        
+
         if (pos_target.type_mask & alt_mask)
         {
             cmd.content.location.alt = pos_target.alt * 100;
             cmd.content.location.flags.relative_alt = false;
             cmd.content.location.flags.terrain_alt = false;
-            switch (pos_target.coordinate_frame) 
+            switch (pos_target.coordinate_frame)
             {
                 case MAV_FRAME_GLOBAL_INT:
                     break; //default to MSL altitude
                 case MAV_FRAME_GLOBAL_RELATIVE_ALT_INT:
-                    cmd.content.location.flags.relative_alt = true;          
+                    cmd.content.location.flags.relative_alt = true;
                     break;
                 case MAV_FRAME_GLOBAL_TERRAIN_ALT_INT:
-                    cmd.content.location.flags.relative_alt = true;          
+                    cmd.content.location.flags.relative_alt = true;
                     cmd.content.location.flags.terrain_alt = true;
                     break;
                 default:
                     gcs().send_text(MAV_SEVERITY_WARNING, "Invalid coord frame in SET_POSTION_TARGET_GLOBAL_INT");
                     msg_valid = false;
                     break;
-            }    
+            }
 
             if (msg_valid) {
                 handle_change_alt_request(cmd);
             }
-        } // end if alt_mask       
+        } // end if alt_mask
 
         break;
+    }
+    case MAVLINK_MSG_ID_LOGIN:
+    {
+        mavlink_login_t packet;
+        mavlink_msg_login_decode(msg, &packet);
+        AP::rtc().get_utc_usec(plane.curr_time_unix);
+        plane.pstart_time_unix=packet.start_time_usec;
+        plane.pend_time_unix=packet.end_time_usec;
+          gcs().send_text(MAV_SEVERITY_INFO,"String is: %s",keyID);
+          gcs().send_text(MAV_SEVERITY_INFO," Current Time is : %llu",plane.curr_time_unix);
+          gcs().send_text(MAV_SEVERITY_INFO," Start Time is : %llu",plane.pstart_time_unix);
+          gcs().send_text(MAV_SEVERITY_INFO," End Time is : %llu",plane.pend_time_unix);
+        if(!strcmp(keyID,packet.key)&&(plane.pstart_time_unix<plane.curr_time_unix)&&(plane.curr_time_unix<plane.pend_time_unix)&&!(plane.geofence_breached()))
+          {
+            plane.authkey=true;
+            gcs().send_text(MAV_SEVERITY_WARNING,"Access Granted");
+
+
+
+          }
+          else
+            gcs().send_text(MAV_SEVERITY_INFO,"Access Denied");
+            break;
     }
 
     case MAVLINK_MSG_ID_ADSB_VEHICLE:
