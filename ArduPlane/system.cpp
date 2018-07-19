@@ -734,9 +734,14 @@ void Plane::change_arm_state(void)
  */
 bool Plane::arm_motors(const AP_Arming::ArmingMethod method, const bool do_arming_checks)
 {
+  if(plane.DIGITAL_SKY)
+  {
     if (!arming.arm(method, do_arming_checks,plane.authkey)) {
         return false;
     }
+  }
+  if (!arming.arm(method, do_arming_checks,INITIAL_DS_STATE)) 
+      return false;
 
     change_arm_state();
     return true;

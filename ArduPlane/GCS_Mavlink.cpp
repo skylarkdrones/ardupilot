@@ -1013,6 +1013,17 @@ MAV_RESULT GCS_MAVLINK_Plane::handle_command_long_packet(const mavlink_command_l
         }
         return MAV_RESULT_FAILED;
 
+
+    case MAV_CMD_DO_DIGITAL_SKY_ENABLE:
+      {
+        if (!is_zero(packet.param1))
+        {
+          plane.DIGITAL_SKY = true;
+        }
+        else
+          plane.DIGITAL_SKY = false;
+      }
+
     case MAV_CMD_DO_SET_HOME: {
         // param1 : use current (1=use current location, 0=use specified location)
         // param5 : latitude
@@ -1105,7 +1116,6 @@ MAV_RESULT GCS_MAVLINK_Plane::handle_command_long_packet(const mavlink_command_l
             return MAV_RESULT_FAILED;
         }
         return MAV_RESULT_ACCEPTED;
-
     default:
         return GCS_MAVLINK::handle_command_long_packet(packet);
     }
@@ -1512,10 +1522,14 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
         AP::rtc().get_utc_usec(plane.curr_time_unix);
         plane.pstart_time_unix=packet.start_time_usec;
         plane.pend_time_unix=packet.end_time_usec;
-          gcs().send_text(MAV_SEVERITY_INFO,"String is: %s",keyID);
-          gcs().send_text(MAV_SEVERITY_INFO," Current Time is : %llu",plane.curr_time_unix);
-          gcs().send_text(MAV_SEVERITY_INFO," Start Time is : %llu",plane.pstart_time_unix);
-          gcs().send_text(MAV_SEVERITY_INFO," End Time is : %llu",plane.pend_time_unix);
+        if(plane.DIGITAL_SKY)
+          gcs().send_text(MAV_SEVERITY_INFO,"true");
+        else
+        gcs().send_text(MAV_SEVERITY_INFO,"false");
+          //gcs().send_text(MAV_SEVERITY_INFO,"String is: %s",keyID);
+          // gcs().send_text(MAV_SEVERITY_INFO," Current Time is : %llu",plane.curr_time_unix);
+          // gcs().send_text(MAV_SEVERITY_INFO," Start Time is : %llu",plane.pstart_time_unix);
+          // gcs().send_text(MAV_SEVERITY_INFO," End Time is : %llu",plane.pend_time_unix);
         if(!strcmp(keyID,packet.key)&&(plane.pstart_time_unix<plane.curr_time_unix)&&(plane.curr_time_unix<plane.pend_time_unix)&&!(plane.geofence_breached()))
           {
             plane.authkey=true;

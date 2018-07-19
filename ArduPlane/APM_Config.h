@@ -6,3 +6,4 @@
 // longer valid! You should switch to using CONFIG_HAL_BOARD via the HAL_BOARD
 // flag in your local config.mk instead.
 
+#define INITIAL_DS_STATE true

@@ -157,7 +157,7 @@ public:
 
     Plane(void);
 
-
+    bool DIGITAL_SKY=false;
     bool authkey=false;
     uint64_t curr_time_unix;
     uint64_t pstart_time_unix;
