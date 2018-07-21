@@ -734,13 +734,14 @@ void Plane::change_arm_state(void)
  */
 bool Plane::arm_motors(const AP_Arming::ArmingMethod method, const bool do_arming_checks)
 {
-  if(plane.DIGITAL_SKY)
+  AP::rtc().get_utc_usec(plane.curr_time_unix);
+  if(plane.DIGITAL_SKY && (plane.pend_time_unix>plane.curr_time_unix) && (plane.pstart_time_unix<plane.curr_time_unix))
   {
     if (!arming.arm(method, do_arming_checks,plane.authkey)) {
         return false;
     }
   }
-  if (!arming.arm(method, do_arming_checks,INITIAL_DS_STATE)) 
+  if (!arming.arm(method, do_arming_checks,INITIAL_DS_STATE))
       return false;
 
     change_arm_state();

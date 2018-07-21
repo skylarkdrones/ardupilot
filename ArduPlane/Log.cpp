@@ -16,7 +16,7 @@ void Plane::Log_Write_Attitude(void)
         //Plane does not have the concept of navyaw. This is a placeholder.
         targets.z = 0;
     }
-    
+
     if (quadplane.tailsitter_active()) {
         DataFlash.Log_Write_AttitudeView(*quadplane.ahrs_view, targets);
     } else {
@@ -90,7 +90,7 @@ void Plane::Log_Write_Control_Tuning()
 {
     float est_airspeed = 0;
     ahrs.airspeed_estimate(&est_airspeed);
-    
+
     struct log_Control_Tuning pkt = {
         LOG_PACKET_HEADER_INIT(LOG_CTUN_MSG),
         time_us         : AP_HAL::micros64(),
@@ -247,10 +247,52 @@ void Plane::Log_Arm_Disarm() {
         LOG_PACKET_HEADER_INIT(LOG_ARM_DISARM_MSG),
         time_us                 : AP_HAL::micros64(),
         arm_state               : arming.is_armed(),
-        arm_checks              : arming.get_enabled_checks()      
+        arm_checks              : arming.get_enabled_checks()
     };
     DataFlash.WriteCriticalBlock(&pkt, sizeof(pkt));
 }
+
+
+
+struct PACKED log_Geo_Breach {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    int32_t breach_lat;
+    int32_t breach_long;
+};
+
+void Plane::Log_Geo_Breach() {
+  ahrs.get_position(current_loc);
+    struct log_Geo_Breach pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_GEO_BREACH_MSG),
+        time_us                 : AP_HAL::micros64(),
+        breach_lat               : current_loc.lat,
+        breach_long              : current_loc.lng
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+struct PACKED log_Time_Breach {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    int32_t t_breach_lat;
+    int32_t t_breach_long;
+};
+
+void Plane::Log_Time_Breach() {
+  ahrs.get_position(current_loc);
+    struct log_Time_Breach pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_TIME_BREACH_MSG),
+        time_us                 : AP_HAL::micros64(),
+        t_breach_lat               : current_loc.lat,
+        t_breach_long              : current_loc.lng
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+
+
+
 
 
 struct PACKED log_AETR {
@@ -293,16 +335,20 @@ void Plane::Log_Write_RC(void)
 // units and "Format characters" for field type information
 const struct LogStructure Plane::log_structure[] = {
     LOG_COMMON_STRUCTURES,
-    { LOG_STARTUP_MSG, sizeof(log_Startup),         
+    { LOG_STARTUP_MSG, sizeof(log_Startup),
       "STRT", "QBH",         "TimeUS,SType,CTot", "s--", "F--" },
-    { LOG_CTUN_MSG, sizeof(log_Control_Tuning),     
+    { LOG_CTUN_MSG, sizeof(log_Control_Tuning),
       "CTUN", "Qcccchhhf",    "TimeUS,NavRoll,Roll,NavPitch,Pitch,ThrOut,RdrOut,ThrDem,Aspd", "sdddd---n", "FBBBB---0" },
-    { LOG_NTUN_MSG, sizeof(log_Nav_Tuning),         
+    { LOG_NTUN_MSG, sizeof(log_Nav_Tuning),
       "NTUN", "QfcccfffLLi",  "TimeUS,WpDist,TBrg,NavBrg,AltErr,XT,XTi,ArspdErr,TLat,TLng,TAlt", "smddmmmnDUm", "F0BBB0B0GGB" },
-    { LOG_SONAR_MSG, sizeof(log_Sonar),             
+    { LOG_SONAR_MSG, sizeof(log_Sonar),
       "SONR", "QffBf",   "TimeUS,Dist,Volt,Cnt,Corr", "smv--", "FB0--" },
     { LOG_ARM_DISARM_MSG, sizeof(log_Arm_Disarm),
       "ARM", "QBH", "TimeUS,ArmState,ArmChecks", "s--", "F--" },
+    { LOG_GEO_BREACH_MSG, sizeof(log_Geo_Breach),
+      "GEO", "QLL", "TimeUS,LAT,LONG", "s--", "F--" },
+    { LOG_TIME_BREACH_MSG, sizeof(log_Time_Breach),
+      "TME1", "QLL", "TimeUS,LAT,LONG", "s--", "F--" },
     { LOG_ATRP_MSG, sizeof(AP_AutoTune::log_ATRP),
       "ATRP", "QBBcfff",  "TimeUS,Type,State,Servo,Demanded,Achieved,P", "s---dd-", "F---00-" },
     { LOG_STATUS_MSG, sizeof(log_Status),
@@ -361,6 +407,8 @@ void Plane::Log_Write_Optflow() {}
  #endif
 
 void Plane::Log_Arm_Disarm() {}
+void Plane::Log_Geo_Breach() {}
+void Plane::Log_Time_Breach() {}
 void Plane::Log_Write_RC(void) {}
 void Plane::Log_Write_Vehicle_Startup_Messages() {}
 

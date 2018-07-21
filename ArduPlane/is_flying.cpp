@@ -18,6 +18,14 @@ void Plane::update_is_flying_5Hz(void)
     bool is_flying_bool;
     uint32_t now_ms = AP_HAL::millis();
 
+
+
+        AP::rtc().get_utc_usec(plane.curr_time_unix);
+        if(plane.pend_time_unix<plane.curr_time_unix && plane.DIGITAL_SKY)
+        {
+                gcs().send_text(MAV_SEVERITY_INFO,"Out of time period");
+                Log_Time_Breach();
+        }
     uint32_t ground_speed_thresh_cm = (aparm.min_gndspeed_cm > 0) ? ((uint32_t)(aparm.min_gndspeed_cm*0.9f)) : GPS_IS_FLYING_SPEED_CMS;
     bool gps_confirmed_movement = (gps.status() >= AP_GPS::GPS_OK_FIX_3D) &&
                                     (gps.ground_speed_cm() >= ground_speed_thresh_cm);
@@ -171,8 +179,7 @@ bool Plane::is_flying(void)
 {
 
   AP::rtc().get_utc_usec(plane.curr_time_unix);
-  if(!(plane.pstart_time_unix<plane.curr_time_unix)&&!(plane.pend_time_unix>plane.curr_time_unix))
-          gcs().send_text(MAV_SEVERITY_INFO,"Out of time period");
+
     if (hal.util->get_soft_armed()) {
         if (quadplane.is_flying_vtol()) {
             return true;
