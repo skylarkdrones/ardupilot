@@ -118,6 +118,9 @@
 #include <SITL/SITL.h>
 #endif
 
+
+
+
 /*
   a plane specific AP_AdvancedFailsafe class
  */
@@ -128,7 +131,7 @@ public:
 
     // called to set all outputs to termination state
     void terminate_vehicle(void);
-    
+
 protected:
     // setup failsafe values for if FMU firmware stops running
     void setup_IO_failsafe(void);
@@ -153,6 +156,12 @@ public:
     friend class GCS_Plane;
 
     Plane(void);
+
+    bool DIGITAL_SKY=false;
+    bool authkey=false;
+    uint64_t curr_time_unix;
+    uint64_t pstart_time_unix;
+    uint64_t pend_time_unix;
 
     // HAL::Callbacks implementation.
     void setup() override;
@@ -293,7 +302,7 @@ private:
 #if OSD_ENABLED == ENABLED
     AP_OSD osd;
 #endif
-    
+
     // This is the state of the flight control system
     // There are multiple states defined such as MANUAL, FBW-A, AUTO
     enum FlightMode control_mode = INITIALISING;
@@ -338,10 +347,10 @@ private:
 
         // the time when the last HEARTBEAT message arrived from a GCS
         uint32_t last_heartbeat_ms;
-        
+
         // A timer used to track how long we have been in a "short failsafe" condition due to loss of RC signal
         uint32_t short_timer_ms;
-        
+
         uint32_t last_valid_rc_ms;
 
         //keeps track of the last valid rc as it relates to the AFS system
@@ -401,7 +410,7 @@ private:
     uint32_t control_sensors_present;
     uint32_t control_sensors_enabled;
     uint32_t control_sensors_health;
- 
+
     // Airspeed Sensors
     AP_Airspeed airspeed;
 
@@ -426,7 +435,7 @@ private:
         uint32_t last_report_ms;
         bool launchTimerStarted;
     } takeoff_state;
-    
+
     // ground steering controller state
     struct {
         // Direction held during phases of takeoff and landing centidegrees
@@ -434,7 +443,7 @@ private:
         // this is a 0..36000 value, or -1 for disabled
         int32_t hold_course_cd;
 
-        // locked_course and locked_course_cd are used in stabilize mode 
+        // locked_course and locked_course_cd are used in stabilize mode
         // when ground steering is active, and for steering in auto-takeoff
         bool locked_course;
         float locked_course_err;
@@ -485,10 +494,10 @@ private:
         // the highest airspeed we have reached since entering AUTO. Used
         // to control ground takeoff
         float highest_airspeed;
-        
+
         // initial pitch. Used to detect if nose is rising in a tail dragger
         int16_t initial_pitch_cd;
-        
+
         // turn angle for next leg of mission
         float next_turn_angle {90};
 
@@ -497,13 +506,13 @@ private:
 
         // time when we first pass min GPS speed on takeoff
         uint32_t takeoff_speed_time_ms;
-        
+
         // distance to next waypoint
         float wp_distance;
-        
+
         // proportion to next waypoint
         float wp_proportion;
-        
+
         // last time is_flying() returned true in milliseconds
         uint32_t last_flying_ms;
 
@@ -559,13 +568,13 @@ private:
     // true if we are in an auto-navigation mode, which controls whether control input is ignored
     // with STICK_MIXING=0
     bool auto_navigation_mode:1;
-    
+
     // this allows certain flight modes to mix RC input with throttle depending on airspeed_nudge_cm
     bool throttle_allows_nudging:1;
 
     // this controls throttle suppression in auto modes
     bool throttle_suppressed;
-	
+
     // reduce throttle to eliminate battery over-current
     int8_t  throttle_watt_limit_max;
     int8_t  throttle_watt_limit_min; // for reverse thrust
@@ -639,7 +648,7 @@ private:
         // previous target bearing, used to update sum_cd
         int32_t old_target_bearing_cd;
 
-        // Total desired rotation in a loiter.  Used for Loiter Turns commands. 
+        // Total desired rotation in a loiter.  Used for Loiter Turns commands.
         int32_t total_cd;
 
         // total angle completed in the loiter so far
@@ -764,12 +773,12 @@ private:
     AP_Tuning_Plane tuning;
 
     static const struct LogStructure log_structure[];
-    
+
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
     // the crc of the last created PX4Mixer
     int32_t last_mixer_crc = -1;
 #endif // CONFIG_HAL_BOARD
-    
+
     void adjust_nav_pitch_throttle(void);
     void update_load_factor(void);
     void send_fence_status(mavlink_channel_t chan);
@@ -799,6 +808,8 @@ private:
     void Log_Write_Sonar();
     void Log_Write_Optflow();
     void Log_Arm_Disarm();
+    void Log_Geo_Breach();
+    void Log_Time_Breach();
     void Log_Write_RC(void);
     void Log_Write_Vehicle_Startup_Messages();
     void Log_Write_AOA_SSA();

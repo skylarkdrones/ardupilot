@@ -18,6 +18,14 @@ void Plane::update_is_flying_5Hz(void)
     bool is_flying_bool;
     uint32_t now_ms = AP_HAL::millis();
 
+
+
+        AP::rtc().get_utc_usec(plane.curr_time_unix);
+        if(plane.pend_time_unix<plane.curr_time_unix && plane.DIGITAL_SKY)
+        {
+                gcs().send_text(MAV_SEVERITY_INFO,"Out of time period");
+                Log_Time_Breach();
+        }
     uint32_t ground_speed_thresh_cm = (aparm.min_gndspeed_cm > 0) ? ((uint32_t)(aparm.min_gndspeed_cm*0.9f)) : GPS_IS_FLYING_SPEED_CMS;
     bool gps_confirmed_movement = (gps.status() >= AP_GPS::GPS_OK_FIX_3D) &&
                                     (gps.ground_speed_cm() >= ground_speed_thresh_cm);
@@ -169,6 +177,9 @@ void Plane::update_is_flying_5Hz(void)
  */
 bool Plane::is_flying(void)
 {
+
+  AP::rtc().get_utc_usec(plane.curr_time_unix);
+
     if (hal.util->get_soft_armed()) {
         if (quadplane.is_flying_vtol()) {
             return true;
@@ -210,7 +221,7 @@ void Plane::crash_detection_update(void)
             if (!crash_state.checkedHardLanding && // only check once
                 been_auto_flying &&
                 (labs(ahrs.roll_sensor) > 6000 || labs(ahrs.pitch_sensor) > 6000)) {
-                
+
                 crashed = true;
 
                 // did we "crash" within 75m of the landing location? Probably just a hard landing
@@ -311,5 +322,3 @@ bool Plane::in_preLaunch_flight_stage(void) {
             mission.get_current_nav_cmd().id == MAV_CMD_NAV_TAKEOFF &&
             !quadplane.is_vtol_takeoff(mission.get_current_nav_cmd().id));
 }
-
-

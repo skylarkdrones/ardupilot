@@ -113,7 +113,7 @@ void Plane::geofence_load(void)
             geofence_disable_and_send_error_msg("failed to init boundary memory");
             return;
         }
-        
+
         geofence_state->old_switch_position = 254;
     }
 
@@ -169,7 +169,7 @@ bool Plane::geofence_present(void)
 /*
   check FENCE_CHANNEL and update the is_pwm_enabled state
  */
-void Plane::geofence_update_pwm_enabled_state() 
+void Plane::geofence_update_pwm_enabled_state()
 {
     bool is_pwm_enabled;
     if (g.fence_channel == 0) {
@@ -193,11 +193,11 @@ void Plane::geofence_update_pwm_enabled_state()
 
     if (geofence_state->is_pwm_enabled != geofence_state->previous_is_pwm_enabled) {
         geofence_set_enabled(geofence_state->is_pwm_enabled, PWM_TOGGLED);
-    }    
+    }
 }
 
 //return true on success, false on failure
-bool Plane::geofence_set_enabled(bool enable, GeofenceEnableReason r) 
+bool Plane::geofence_set_enabled(bool enable, GeofenceEnableReason r)
 {
     if (geofence_state == nullptr && enable) {
         geofence_load();
@@ -212,7 +212,7 @@ bool Plane::geofence_set_enabled(bool enable, GeofenceEnableReason r)
         geofence_set_floor_enabled(true);
     }
     geofence_state->enable_reason = r;
-    
+
     return true;
 }
 
@@ -247,7 +247,7 @@ bool Plane::geofence_set_floor_enabled(bool floor_enable) {
     if (geofence_state == nullptr) {
         return false;
     }
-    
+
     geofence_state->floor_enabled = floor_enable;
     return true;
 }
@@ -373,6 +373,12 @@ void Plane::geofence_check(bool altitude_check_only)
 
     gcs().send_text(MAV_SEVERITY_NOTICE,"Geofence triggered");
     gcs().send_message(MSG_FENCE_STATUS);
+    Log_Geo_Breach();
+    DataFlash_Class::instance()->Log_Write("GEO1", "TimeUS,lat,long", "QLL",
+                                              AP_HAL::micros64(),
+                                               current_loc.lat,
+                                               current_loc.lng
+                                             );
 
     // see what action the user wants
     switch (g.fence_action) {
