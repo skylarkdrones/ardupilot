@@ -951,6 +951,8 @@ MAV_RESULT GCS_MAVLINK_Plane::handle_command_long_packet(const mavlink_command_l
             }
             return MAV_RESULT_FAILED;
         } else if (is_zero(packet.param1))  {
+          if(plane.DIGITAL_SKY)
+              //plane.authkey=false;
             if (plane.disarm_motors()) {
                 return MAV_RESULT_ACCEPTED;
             }
