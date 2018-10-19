@@ -1,5 +1,5 @@
 #include "GCS_Mavlink.h"
-
+//#include <cTime>
 #include "Plane.h"
 
 MAV_TYPE GCS_MAVLINK_Plane::frame_type() const
@@ -944,6 +944,7 @@ MAV_RESULT GCS_MAVLINK_Plane::handle_command_long_packet(const mavlink_command_l
 
     case MAV_CMD_COMPONENT_ARM_DISARM:
         if (is_equal(packet.param1,1.0f)) {
+            gcs().send_text(MAV_SEVERITY_NOTICE,"arm called");
             // run pre_arm_checks and arm_checks and display failures
             const bool do_arming_checks = !is_equal(packet.param2,magic_force_arm_value);
             if (plane.arm_motors(AP_Arming::MAVLINK, do_arming_checks)) {
@@ -951,8 +952,10 @@ MAV_RESULT GCS_MAVLINK_Plane::handle_command_long_packet(const mavlink_command_l
             }
             return MAV_RESULT_FAILED;
         } else if (is_zero(packet.param1))  {
-          if(plane.DIGITAL_SKY)
+
+          //if(plane.DIGITAL_SKY)
               //plane.authkey=false;
+              gcs().send_text(MAV_SEVERITY_NOTICE,"Disarm called");
             if (plane.disarm_motors()) {
                 return MAV_RESULT_ACCEPTED;
             }
@@ -1142,6 +1145,8 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
       }
       icx++;
     }
+
+
 
 
     switch (msg->msgid) {
@@ -1519,11 +1524,45 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
     }
     case MAVLINK_MSG_ID_LOGIN:
     {
+        char private_key[11];                                        //testing variable for digital signature
+        char public_key[11];                                         // ditto above one
+        char decrypt[7];                                             // same bro
+        int kcx=0;                                                   // guess what it is
         mavlink_login_t packet;
         mavlink_msg_login_decode(msg, &packet);
         AP::rtc().get_utc_usec(plane.curr_time_unix);
         plane.pstart_time_unix=packet.start_time_usec;
         plane.pend_time_unix=packet.end_time_usec;
+        /////////////////////////////////////// Key generation test///////////////////////////////////////////////////
+        //////////////////////////// Not advisable to generate and save in the plane /////////////////////////////////
+        // Best place to do this is where the permission is generated and create an offset to change the serial id////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        while(kcx<7)
+        {
+          int temp,rand_temp;
+          temp=int(keyID[kcx]);
+          rand_temp=rand()%(temp-48+1)+48;
+          gcs().send_text(MAV_SEVERITY_INFO,"Random number is : %d",rand_temp);
+          gcs().send_text(MAV_SEVERITY_INFO,"KCX is  : %d",kcx);
+          private_key[kcx]=char(rand_temp);
+          public_key[kcx]=char(48+(temp-rand_temp));
+          kcx++;
+        }
+        kcx=0;
+        while(kcx<7)
+        {
+          decrypt[kcx]=char((int(private_key[kcx])-48)+int(public_key[kcx]));
+          kcx++;
+        }
+
+        gcs().send_text(MAV_SEVERITY_INFO,"Private key is : %s",private_key);
+        gcs().send_text(MAV_SEVERITY_INFO,"Public key is : %s",public_key);
+        gcs().send_text(MAV_SEVERITY_INFO,"Decrypt key is : %s",decrypt);
+
+        // Temp = rand()%40+60;
+        // gcs().send_text(MAV_SEVERITY_INFO,"Random Number is : %d",Temp);
+        //
+
         if(plane.DIGITAL_SKY)
           gcs().send_text(MAV_SEVERITY_INFO,"true");
         else
@@ -1536,9 +1575,6 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
           {
             plane.authkey=true;
             gcs().send_text(MAV_SEVERITY_WARNING,"Access Granted");
-
-
-
           }
           else
             gcs().send_text(MAV_SEVERITY_INFO,"Access Denied");
