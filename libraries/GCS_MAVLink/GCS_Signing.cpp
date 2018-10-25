@@ -14,6 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+ 
 
 #include "GCS.h"
 
@@ -93,7 +94,7 @@ static const uint32_t accept_list[] = {
     MAVLINK_MSG_ID_RADIO_STATUS,
     MAVLINK_MSG_ID_RADIO
 };
-    
+
 static bool accept_unsigned_callback(const mavlink_status_t *status, uint32_t msgId)
 {
     if (status == mavlink_get_channel_status(MAVLINK_COMM_0)) {
@@ -122,7 +123,7 @@ void GCS_MAVLINK::load_signing_key(void)
     mavlink_status_t *status = mavlink_get_channel_status(chan);
     if (status == nullptr) {
         hal.console->printf("Failed to load signing key - no status");
-        return;        
+        return;
     }
     memcpy(signing.secret_key, key.secret_key, 32);
     signing.link_id = (uint8_t)chan;
@@ -140,7 +141,7 @@ void GCS_MAVLINK::load_signing_key(void)
             all_zero = false;
         }
     }
-    
+
     // enable signing on all channels
     for (uint8_t i=0; i<MAVLINK_COMM_NUM_BUFFERS; i++) {
         mavlink_status_t *cstatus = mavlink_get_channel_status((mavlink_channel_t)(MAVLINK_COMM_0 + i));
@@ -249,11 +250,10 @@ uint8_t GCS_MAVLINK::packet_overhead_chan(mavlink_channel_t chan)
     } else {
         reserve_param_space_start_ms = 0;
     }
-    
+
     const mavlink_status_t *status = mavlink_get_channel_status(chan);
     if (status->signing && (status->signing->flags & MAVLINK_SIGNING_FLAG_SIGN_OUTGOING)) {
         return MAVLINK_NUM_NON_PAYLOAD_BYTES + MAVLINK_SIGNATURE_BLOCK_LEN + reserved_space;
     }
     return MAVLINK_NUM_NON_PAYLOAD_BYTES + reserved_space;
 }
-

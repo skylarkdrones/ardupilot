@@ -745,10 +745,13 @@ bool Plane::arm_motors(const AP_Arming::ArmingMethod method, const bool do_armin
         return false;
     }
   }
-  if (!arming.arm(method, do_arming_checks,INITIAL_DS_STATE)){
+
+  if (!plane.activate)
+  {
+    arming.arm(method, do_arming_checks,INITIAL_DS_STATE);
     gcs().send_text(MAV_SEVERITY_INFO,"the other function");
       return false;
-}
+  }
 
     change_arm_state();
     return true;

@@ -2,6 +2,8 @@
 //#include <cTime>
 #include "Plane.h"
 
+
+
 MAV_TYPE GCS_MAVLINK_Plane::frame_type() const
 {
     return plane.quadplane.get_mav_type();
@@ -1023,10 +1025,14 @@ MAV_RESULT GCS_MAVLINK_Plane::handle_command_long_packet(const mavlink_command_l
       {
         if (!is_zero(packet.param1))
         {
+          plane.activate=true;
           plane.DIGITAL_SKY = true;
         }
         else
+        {
           plane.DIGITAL_SKY = false;
+          plane.activate=false;
+        }
       }
 
     case MAV_CMD_DO_SET_HOME: {

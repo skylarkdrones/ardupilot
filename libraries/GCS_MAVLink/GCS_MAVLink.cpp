@@ -64,7 +64,7 @@ void GCS_MAVLINK::lock_channel(mavlink_channel_t _chan, bool lock)
         mavlink_locked_mask &= ~(1U<<(unsigned)_chan);
     }
 }
-
+  
 // return a MAVLink variable type given a AP_Param type
 uint8_t mav_var_type(enum ap_var_type t)
 {

@@ -156,7 +156,7 @@ public:
     friend class GCS_Plane;
 
     Plane(void);
-
+    bool activate=false;
     bool DIGITAL_SKY=false;
     bool authkey=false;
     uint64_t curr_time_unix;
