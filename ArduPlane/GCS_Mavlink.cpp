@@ -1461,8 +1461,11 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
       gcs().send_text(MAV_SEVERITY_WARNING,"The longitude id is %d",packet.lon);
       gcs().send_text(MAV_SEVERITY_WARNING,"The start time is %d",packet.start_time);
       gcs().send_text(MAV_SEVERITY_WARNING,"The end time is %d",packet.end_time);
-
-      if(!strcmp(keyID,packet.serial_id))
+      AP::rtc().get_utc_usec(plane.curr_time_unix);
+      gcs().send_text(MAV_SEVERITY_INFO," Current Time is : %llu",plane.curr_time_unix);
+      plane.pstart_time_unix=packet.start_time;
+      plane.pend_time_unix=packet.end_time;
+      if(!strcmp(keyID,packet.serial_id)&&!(plane.geofence_breached())&&(plane.pstart_time_unix<plane.curr_time_unix)&&(plane.curr_time_unix<plane.pend_time_unix))
       {
         plane.authkey=true;
         gcs().send_text(MAV_SEVERITY_WARNING,"Access Granted");
@@ -1470,6 +1473,21 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
         gcs().send_text(MAV_SEVERITY_INFO,"Access Denied");
 
       break;
+    }
+    case MAVLINK_MSG_ID_NO_FLY_POINT: {
+        mavlink_fence_point_t packet;
+        mavlink_msg_fence_point_decode(msg, &packet);
+        if (packet.idx>packet.count) {
+            send_text(MAV_SEVERITY_WARNING,"Bad fence point");
+        } else if (!check_latlng(packet.lat,packet.lng)) {
+            send_text(MAV_SEVERITY_WARNING,"Invalid fence point, lat or lng too large");
+        } else {
+            //plane.set_fence_point_with_index(Vector2l(packet.lat*1.0e7f, packet.lng*1.0e7f), packet.idx);
+            AP::rtc().get_utc_usec(plane.curr_time_unix);
+            gcs().send_text(MAV_SEVERITY_INFO," Current Time is : %llu",plane.curr_time_unix);
+            gcs().send_text(MAV_SEVERITY_INFO,"fencing message calling works");
+        }
+        break;
     }
     case MAVLINK_MSG_ID_ADSB_VEHICLE:
     case MAVLINK_MSG_ID_UAVIONIX_ADSB_OUT_CFG:
