@@ -161,6 +161,7 @@ public:
     Plane(void);
 
     bool authkey=false;
+    bool timebreachlogged=false;
     uint64_t curr_time_unix;
     uint64_t pstart_time_unix;
     uint64_t pend_time_unix;

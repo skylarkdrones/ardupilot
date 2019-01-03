@@ -2,6 +2,13 @@
 
 #include "Plane.h"
 
+// #include <wolfssl/wolfcrypt/hash.h>
+// #include <wolfssl/wolfcrypt/rsa.h>
+// #include <wolfssl/wolfcrypt/arc4.h>
+// #include <wolfssl/wolfcrypt/integer.h>
+// #include <wolfssl/wolfcrypt/memory.h>
+// #include <wolfssl/wolfcrypt/random.h>
+
 MAV_TYPE GCS_MAVLINK_Plane::frame_type() const
 {
     return plane.quadplane.get_mav_type();
@@ -686,6 +693,23 @@ bool GCS_MAVLINK_Plane::in_hil_mode() const
     return false;
 }
 
+void GCS_MAVLINK_Plane::extractID(char serialID[40])
+{
+  // Extract the board ID . Is it better to do with a function?
+  //Even if we are not freeing up the memory space.
+  //TO-DO: OPtimization required for extractig the board ID.
+    uint8_t buf[12];
+    // char msg_ID[24];
+
+    memcpy(buf, (const void *)UDID_START, 12);
+    snprintf(serialID, 40, "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+             (unsigned)buf[3], (unsigned)buf[2], (unsigned)buf[1], (unsigned)buf[0],
+             (unsigned)buf[7], (unsigned)buf[6], (unsigned)buf[5], (unsigned)buf[4],
+             (unsigned)buf[11], (unsigned)buf[10], (unsigned)buf[9],(unsigned)buf[8]);
+             serialID[39] = 0;
+
+}
+
 /*
   handle a request to switch to guided mode. This happens via a
   callback from handle_mission_item()
@@ -707,6 +731,42 @@ bool GCS_MAVLINK_Plane::handle_guided_request(AP_Mission::Mission_Command &cmd)
     plane.set_guided_WP();
     return true;
 }
+
+//
+// static int HashFirmware(const byte *in, int len, byte* hashBuf)
+// {
+//     int ret;
+//     Sha256 sha;
+//     int idx = 0, sz;
+//
+//     ret = wc_InitSha256(&sha);
+//     if (ret != 0)
+//         return ret;
+//
+//     /* loop through each chunk of firmware */
+//     while (len > 0) {
+//         /* determine hash update size */
+//         sz = len;
+//         if (sz > 128)
+//             sz = 128;
+//
+//         /* update hash */
+//         ret = wc_Sha256Update(&sha, &in[idx], (word32)sz);
+//         if (ret != 0)
+//             break;
+//
+//         len -= sz;
+//         idx += sz;
+//     }
+//
+//     if (ret == 0) {
+//         ret = wc_Sha256Final(&sha, hashBuf);
+//     }
+//
+//     wc_Sha256Free(&sha);
+//
+//     return ret;
+// }
 
 /*
   handle a request to change current WP altitude. This happens via a
@@ -912,6 +972,13 @@ MAV_RESULT GCS_MAVLINK_Plane::handle_command_long_packet(const mavlink_command_l
         plane.set_mode(AUTO, MODE_REASON_GCS_COMMAND);
         return MAV_RESULT_ACCEPTED;
 
+    case MAV_CMD_REQUEST_BOARD_ID:
+    {
+        char ID[40];
+        extractID(ID);
+        gcs().send_text(MAV_SEVERITY_INFO,"UNIQUE ID : %s",ID);
+        return MAV_RESULT_ACCEPTED;
+    }
     case MAV_CMD_COMPONENT_ARM_DISARM:
         if (is_equal(packet.param1,1.0f)) {
             // run pre_arm_checks and arm_checks and display failures
@@ -1083,24 +1150,37 @@ MAV_RESULT GCS_MAVLINK_Plane::handle_command_long_packet(const mavlink_command_l
 
 void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
 {
+  /////////////getting the ID hash  //////////////////
+  // uint8_t buf[12];
+  // // char msg_ID[24];
+  // char serialID[40];
+  // memcpy(buf, (const void *)UDID_START, 12);
+  // snprintf(serialID, 40, "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+  //          (unsigned)buf[3], (unsigned)buf[2], (unsigned)buf[1], (unsigned)buf[0],
+  //          (unsigned)buf[7], (unsigned)buf[6], (unsigned)buf[5], (unsigned)buf[4],
+  //          (unsigned)buf[11], (unsigned)buf[10], (unsigned)buf[9],(unsigned)buf[8]);
+  //          serialID[39] = 0;
+  /////////////////////////////////////////////////////
+  // unsigned char hash1[32];
 
+  // FUNCTION start
   ///////////////////////////////////Extraction of id ///////////////////// optimization required
-        char keyID[ sizeof(AP::fwversion().fw_string)];
-        int icx=1;
-        int jcx=0;
-        while(AP::fwversion().fw_string[icx]!=NULL)
-        {
-          if(AP::fwversion().fw_string[icx-1] == '(')
-            {
-              while(AP::fwversion().fw_string[icx+1]!=')')
-              {
-                keyID[jcx]=AP::fwversion().fw_string[icx];
-                jcx++;
-                icx++;
-              }
-            }
-            icx++;
-          }
+        // char keyID[ sizeof(AP::fwversion().middleware_name)];
+        // int icx=1;
+        // int jcx=0;
+        // while(AP::fwversion().fw_string[icx]!=NULL)
+        // {
+        //   if(AP::fwversion().fw_string[icx-1] == '(')
+        //     {
+        //       while(AP::fwversion().fw_string[icx+1]!=')')
+        //       {
+        //         keyID[jcx]=AP::fwversion().fw_string[icx];
+        //         jcx++;
+        //         icx++;
+        //       }
+        //     }
+        //     icx++;
+        //   }
 //////////////////////////////////////   End   ////////////////
     switch (msg->msgid) {
 
@@ -1455,38 +1535,86 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
     {
       mavlink_permission_artefact_t packet;
       mavlink_msg_permission_artefact_decode(msg, &packet);
+      char ID[40];
+      extractID(ID);
 
-      gcs().send_text(MAV_SEVERITY_WARNING,"The serial id is %s",keyID);
-      gcs().send_text(MAV_SEVERITY_WARNING,"The latitude id is %d",packet.lat);
-      gcs().send_text(MAV_SEVERITY_WARNING,"The longitude id is %d",packet.lon);
-      gcs().send_text(MAV_SEVERITY_WARNING,"The start time is %d",packet.start_time);
-      gcs().send_text(MAV_SEVERITY_WARNING,"The end time is %d",packet.end_time);
-      AP::rtc().get_utc_usec(plane.curr_time_unix);
-      gcs().send_text(MAV_SEVERITY_INFO," Current Time is : %llu",plane.curr_time_unix);
+
+      // const AP_FWVersion &version = AP::fwversion();
+      //
+      // HashFirmware((const byte*)"some string", strlen("some string"), hash1);
+      // char outp[65];
+      // for(int i=0; i<32; i++) {
+      //   //outp[i * 2 + 0] = hash[i] >> 4
+      //   sprintf(outp + (i*2), "%02x", hash1[i]);
+      // }
       plane.pstart_time_unix=packet.start_time;
       plane.pend_time_unix=packet.end_time;
-      if(!strcmp(keyID,packet.serial_id)&&!(plane.geofence_breached())&&(plane.pstart_time_unix<plane.curr_time_unix)&&(plane.curr_time_unix<plane.pend_time_unix))
-      {
-        plane.authkey=true;
-        gcs().send_text(MAV_SEVERITY_WARNING,"Access Granted");
-      }else
-        gcs().send_text(MAV_SEVERITY_INFO,"Access Denied");
+      // gcs().send_text(MAV_SEVERITY_WARNING,"The middleware_name is %u",AP::fwversion().middleware_name);
+      // gcs().send_text(MAV_SEVERITY_WARNING,"The middleware_hash_str is %u",AP::fwversion().middleware_hash_str);
 
+      // gcs().send_text(MAV_SEVERITY_WARNING,"The os_name is %s",AP::fwversion().os_name);
+      // gcs().send_text(MAV_SEVERITY_WARNING,"The os_hash_str is %s",AP::fwversion().os_hash_str);
+      // gcs().send_text(MAV_SEVERITY_WARNING,"The firmware str is %s",AP::fwversion().fw_string);
+      // gcs().send_text(MAV_SEVERITY_WARNING,"The woh waala is %s",AP::fwversion().fw_hash_str);
+      gcs().send_text(MAV_SEVERITY_WARNING,"The start time is %llu",packet.start_time);
+      gcs().send_text(MAV_SEVERITY_WARNING,"The end time is %llu",packet.end_time);
+      AP::rtc().get_utc_usec(plane.curr_time_unix);
+      plane.curr_time_unix=plane.curr_time_unix/1000000;
+      gcs().send_text(MAV_SEVERITY_INFO," Current Time is : %llu",plane.curr_time_unix);
+      // gcs().send_text(MAV_SEVERITY_WARNING,"%s",buf);
+      // gcs().send_text(MAV_SEVERITY_WARNING,"%s",packet.serial_id);
+      // gcs().send_text(MAV_SEVERITY_WARNING,"%s",ID);
+      // strcpy(msg_ID,packet.serial_id1);
+      // strcat(msg_ID,packet.serial_id2);
+      // gcs().send_text(MAV_SEVERITY_WARNING,"%s",msg_ID);
+      if(!strcmp(ID,packet.serial_id))
+      {
+        gcs().send_text(MAV_SEVERITY_WARNING,"Device ID check passed");
+        if((plane.pstart_time_unix<plane.curr_time_unix)&&(plane.curr_time_unix<plane.pend_time_unix))
+        {
+          gcs().send_text(MAV_SEVERITY_WARNING,"Time Check passed");
+          if(!(plane.geofence_breached()))
+                {
+                  plane.authkey=true;
+                  gcs().send_text(MAV_SEVERITY_WARNING,"Geofence check passed");
+                }else
+                  gcs().send_text(MAV_SEVERITY_INFO,"Geofence check failed");
+                  gcs().send_text(MAV_SEVERITY_WARNING,"Permission to fly granted");
+
+      ///////////////////////testing RSA key ///////////////////////////////
+      // RsaKey genKey;
+      // RNG rng;
+      // int ret;
+      // wc_InitRng(&rng);
+      // wc_InitRsaKey(&genKey, 0);
+      // ret = MakeRsaKey(&genKey, 2048, 65537, &rng);
+      // if (ret != 0)
+      //     gcs().send_text(MAV_SEVERITY_WARNING,"Failedddd");
+      //
+      //
+      }
+      else
+        gcs().send_text(MAV_SEVERITY_WARNING,"Out of time frame");
+    }
+    else
+      gcs().send_text(MAV_SEVERITY_WARNING,"Incorrect Device ID");
       break;
     }
     case MAVLINK_MSG_ID_NO_FLY_POINT: {
         mavlink_fence_point_t packet;
         mavlink_msg_fence_point_decode(msg, &packet);
-        if (packet.idx>packet.count) {
-            send_text(MAV_SEVERITY_WARNING,"Bad fence point");
-        } else if (!check_latlng(packet.lat,packet.lng)) {
-            send_text(MAV_SEVERITY_WARNING,"Invalid fence point, lat or lng too large");
-        } else {
-            //plane.set_fence_point_with_index(Vector2l(packet.lat*1.0e7f, packet.lng*1.0e7f), packet.idx);
-            AP::rtc().get_utc_usec(plane.curr_time_unix);
-            gcs().send_text(MAV_SEVERITY_INFO," Current Time is : %llu",plane.curr_time_unix);
-            gcs().send_text(MAV_SEVERITY_INFO,"fencing message calling works");
-        }
+        // gcs().send_text(MAV_SEVERITY_INFO," Current Time is : %llu",packet.idx);
+        // if (packet.idx>packet.count) {
+        //     send_text(MAV_SEVERITY_WARNING,"Bad fence point");
+        // } else if (!check_latlng(packet.lat,packet.lng)) {
+        //     send_text(MAV_SEVERITY_WARNING,"Invalid fence point, lat or lng too large");
+        // } else {
+        //     //plane.set_fence_point_with_index(Vector2l(packet.lat*1.0e7f, packet.lng*1.0e7f), packet.idx);
+            // AP::rtc().get_utc_usec(plane.curr_time_unix);
+            // gcs().send_text(MAV_SEVERITY_INFO," Current Time is : %d",plane.curr_time_unix);
+        //     gcs().send_text(MAV_SEVERITY_INFO,"fencing message calling works");
+        // }
+
         break;
     }
     case MAVLINK_MSG_ID_ADSB_VEHICLE:

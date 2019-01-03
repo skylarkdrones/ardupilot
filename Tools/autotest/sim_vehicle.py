@@ -314,7 +314,7 @@ def do_build_waf(opts, frame_options):
 
     waf_light = os.path.join(root_dir, "modules/waf/waf-light")
 
-    cmd_configure = [waf_light, "configure", "--board", "sitl"]
+    cmd_configure = [waf_light, "configure", "--board", "sitl", "--use-wolfssl", "/home/sripad/SKYlark/wolfssl/prefix"]
     if opts.debug:
         cmd_configure.append("--debug")
 

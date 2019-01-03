@@ -1,4 +1,4 @@
-/* 
+/*
    DataFlash logging - file oriented variant
 
    This uses posix file IO to create log files called logs/NN.bin in the
@@ -415,7 +415,7 @@ bool DataFlash_File::NeedPrep()
 }
 
 /*
-  construct a log file name given a log number. 
+  construct a log file name given a log number.
   The number in the log filename will *not* be zero-padded.
   Note: Caller must free.
  */
@@ -469,6 +469,14 @@ char *DataFlash_File::_lastlog_file_name(void) const
 {
     char *buf = nullptr;
     if (asprintf(&buf, "%s/LASTLOG.TXT", _log_directory) == -1) {
+        return nullptr;
+    }
+    return buf;
+}
+char *DataFlash_File::_test_file_name(void) const
+{
+    char *buf = nullptr;
+    if (asprintf(&buf, "%s/testfile.TXT", _log_directory) == -1) {
         return nullptr;
     }
     return buf;
@@ -541,7 +549,7 @@ bool DataFlash_File::_WritePrioritisedBlock(const void *pBuffer, uint16_t size, 
     if (!semaphore.take(1)) {
         return false;
     }
-        
+
     uint32_t space = _writebuf.space();
 
     if (_writing_startup_messages &&
@@ -602,9 +610,9 @@ uint16_t DataFlash_File::find_last_log()
             sscanf(buf, "%u", &ret);
 #else
             ret = strtol(buf, NULL, 10);
-#endif            
+#endif
         }
-        close(fd);    
+        close(fd);
     }
     return ret;
 }
@@ -735,7 +743,7 @@ int16_t DataFlash_File::get_log_data(const uint16_t list_entry, const uint16_t p
             hal.console->printf("Log read open fail for %s - %s\n",
                                 fname, strerror(saved_errno));
             free(fname);
-            return -1;            
+            return -1;
         }
         free(fname);
         _read_offset = 0;
@@ -894,7 +902,7 @@ uint16_t DataFlash_File::start_new_log(void)
     }
     if (_write_filename) {
         free(_write_filename);
-        _write_filename = nullptr;        
+        _write_filename = nullptr;
     }
     _write_filename = _log_file_name(log_num);
     if (_write_filename == nullptr) {
@@ -952,7 +960,33 @@ uint16_t DataFlash_File::start_new_log(void)
         _open_error = true;
         return 0xFFFF;
     }
+    // now update lastlog.txt with the new log number
+    char *tname = _test_file_name();
 
+    // we avoid fopen()/fprintf() here as it is not available on as many
+    // systems as open/write
+#if HAL_OS_POSIX_IO
+    int td = open(tname, O_WRONLY|O_CREAT|O_CLOEXEC, 0644);
+#else
+    int td = open(tname, O_WRONLY|O_CREAT|O_CLOEXEC);
+#endif
+    free(tname);
+    if (td == -1) {
+        _open_error = true;
+        return 0xFFFF;
+    }
+
+    char tbuf[30]="eureka";
+    // char da[10]="eureka";
+    // snprintf(tbuf, sizeof(tbuf), "%c\r\n", da);
+    const ssize_t tto_write = strlen(tbuf);
+    const ssize_t twritten = write(td, tbuf, tto_write);
+    close(td);
+
+    if (twritten < tto_write) {
+        _open_error = true;
+        return 0xFFFF;
+    }
     return log_num;
 }
 
@@ -998,7 +1032,7 @@ void DataFlash_File::_io_timer(void)
     if (nbytes == 0) {
         return;
     }
-    if (nbytes < _writebuf_chunk && 
+    if (nbytes < _writebuf_chunk &&
         tnow - _last_write_time < 2000UL) {
         // write in _writebuf_chunk-sized chunks, but always write at
         // least once per 2 seconds if data is available

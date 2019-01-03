@@ -23,6 +23,7 @@
 #include <AP_VisualOdom/AP_VisualOdom.h>
 #include <AP_Common/AP_FWVersion.h>
 
+
 // check if a message will fit in the payload space available
 #define PAYLOAD_SIZE(chan, id) (GCS_MAVLINK::packet_overhead_chan(chan)+MAVLINK_MSG_ID_ ## id ## _LEN)
 #define HAVE_PAYLOAD_SPACE(chan, id) (comm_get_txspace(chan) >= PAYLOAD_SIZE(chan, id))
@@ -201,7 +202,7 @@ public:
     void send_accelcal_vehicle_position(uint32_t position);
 
     // return a bitmap of active channels. Used by libraries to loop
-    // over active channels to send to all active channels    
+    // over active channels to send to all active channels
     static uint8_t active_channel_mask(void) { return mavlink_active; }
 
     // return a bitmap of streaming channels
@@ -218,12 +219,12 @@ public:
       This is a no-op if no routes to components have been learned
     */
     static void send_to_components(const mavlink_message_t* msg) { routing.send_to_components(msg); }
-    
+
     /*
       allow forwarding of packets / heartbeats to be blocked as required by some components to reduce traffic
     */
     static void disable_channel_routing(mavlink_channel_t chan) { routing.no_route_mask |= (1U<<(chan-MAVLINK_COMM_0)); }
-    
+
     /*
       search for a component in the routing table with given mav_type and retrieve it's sysid, compid and channel
       returns if a matching component is found
@@ -460,7 +461,7 @@ private:
 
     // time when we missed sending a parameter for GCS
     static uint32_t reserve_param_space_start_ms;
-    
+
     // bitmask of what mavlink channels are active
     static uint8_t mavlink_active;
 
@@ -472,7 +473,7 @@ private:
 
     // pointer to static frsky_telem for queueing of text messages
     static AP_Frsky_Telem *frsky_telemetry_p;
- 
+
     static const AP_SerialManager *serialmanager_p;
 
     struct pending_param_request {
@@ -482,7 +483,7 @@ private:
     };
 
     struct pending_param_reply {
-        mavlink_channel_t chan;        
+        mavlink_channel_t chan;
         float value;
         enum ap_var_type p_type;
         int16_t param_index;
@@ -499,7 +500,7 @@ private:
 
     // IO timer callback for parameters
     void param_io_timer(void);
-    
+
     // send an async parameter reply
     void send_parameter_reply(void);
 
@@ -537,11 +538,11 @@ private:
       since boot in milliseconds
      */
     uint32_t correct_offboard_timestamp_usec_to_ms(uint64_t offboard_usec, uint16_t payload_size);
-    
+
     mavlink_signing_t signing;
     static mavlink_signing_streams_t signing_streams;
     static uint32_t last_signing_save_ms;
-    
+
     static StorageAccess _signing_storage;
     static bool signing_key_save(const struct SigningKey &key);
     static bool signing_key_load(struct SigningKey &key);
@@ -648,7 +649,7 @@ public:
     // static frsky_telem pointer to support queueing text messages
     AP_Frsky_Telem *frsky_telemetry_p;
 
-    
+
     // install an alternative protocol handler
     bool install_alternative_protocol(mavlink_channel_t chan, GCS_MAVLINK::protocol_handler_fn_t handler);
 

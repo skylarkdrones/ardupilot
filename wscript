@@ -156,6 +156,12 @@ board-dependent, usually /var/lib/ardupilot]''')
 configuration in order to save typing.
 ''')
 
+    g.add_option('--use-wolfssl',
+        dest='use_wolfssl',
+        action='store',
+        default='',
+        help='''Wolfssl prefix directory''')
+
     g.add_option('--enable-benchmarks',
         action='store_true',
         default=False,
@@ -284,6 +290,15 @@ def configure(cfg):
     cfg.env.prepend_value('INCLUDES', [
         cfg.srcnode.abspath() + '/libraries/',
     ])
+
+    if cfg.options.use_wolfssl:
+        cfg.env.prepend_value('INCLUDES', [
+            cfg.options.use_wolfssl + '/include',
+        ])
+        cfg.env.prepend_value('LDFLAGS', [
+            '-L' + cfg.options.use_wolfssl + '/lib',
+            '-lwolfssl'
+        ])
 
     cfg.find_program('rsync', mandatory=False)
     if cfg.options.rsync_dest:
@@ -465,7 +480,7 @@ def _load_pre_build(bld):
     '''allow for a pre_build() function in build modules'''
     brd = bld.get_board()
     if getattr(brd, 'pre_build', None):
-        brd.pre_build(bld)    
+        brd.pre_build(bld)
 
 def build(bld):
     config_hash = Utils.h_file(bld.bldnode.make_node('ap_config.h').abspath())

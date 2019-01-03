@@ -1,10 +1,10 @@
-/* 
+/*
    DataFlash logging - file oriented variant
 
    This uses SD library to create log files called logs/NN.bin in the
    given directory
 
-   SD Card Rates 
+   SD Card Rates
     - deletion rate seems to be ~50 files/second.
     - stat seems to be ~150/second
     - readdir loop of 511 entry directory ~62,000 microseconds
@@ -76,7 +76,7 @@ void DataFlash_File::Init()
         SD.mkdir(buf);
 
         if (!SD.mkdir(_log_directory)) {
-            
+
             printf("Failed to create log directory %s: %s\n", _log_directory, SD.strError(SD.lastError));
             gcs().send_text(MAV_SEVERITY_WARNING,"Failed to create log directory %s: %s", _log_directory, SD.strError(SD.lastError));
             _log_directory="0:";
@@ -164,7 +164,7 @@ bool DataFlash_File::CardInserted(void) const
 // returns -1.0f on error
 float DataFlash_File::avail_space_percent(uint32_t *free)
 {
-    
+
     uint32_t space;
     int32_t avail = SD.getfree(_log_directory, &space);
     if(free) *free = avail;
@@ -211,10 +211,10 @@ uint16_t DataFlash_File::find_oldest_log()
             }
             break;
         }
-        
+
         char *nm = de.name();
         de.close();
-        
+
         uint8_t length = strlen(nm);
         if (length < 5) {
             // not long enough for \d+[.]BIN
@@ -268,7 +268,7 @@ uint16_t DataFlash_File::find_oldest_log()
             return i;
         }
     }
-    
+
     return 0;
 }
 #endif
@@ -365,14 +365,14 @@ bool DataFlash_File::NeedPrep()
 }
 
 /*
-  construct a log file name given a log number. 
+  construct a log file name given a log number.
   Note: Caller must free.
  */
 char *DataFlash_File::_log_file_name(const uint16_t log_num) const
 {
     char *buf = (char *)malloc(256);
     if(!buf) return nullptr;
-    
+
     sprintf(buf, "%s/%u.BIN", _log_directory, (unsigned)log_num);
 
     return buf;
@@ -390,6 +390,7 @@ char *DataFlash_File::_lastlog_file_name(void) const
     sprintf(buf, "%s/LASTLOG.TXT", _log_directory);
     return buf;
 }
+
 
 
 // remove all log files
@@ -453,7 +454,7 @@ bool DataFlash_File::_WritePrioritisedBlock(const void *pBuffer, uint16_t size, 
     if (!semaphore.take(1)) {
         return false;
     }
-        
+
     uint32_t space = _writebuf.space();
 
     if (_writing_startup_messages &&
@@ -489,7 +490,7 @@ bool DataFlash_File::_WritePrioritisedBlock(const void *pBuffer, uint16_t size, 
 
     _writebuf.write((uint8_t*)pBuffer, size);
     has_data=true;
-    
+
     semaphore.give();
     return true;
 }
@@ -511,9 +512,9 @@ uint16_t DataFlash_File::find_last_log()
         memset(buf, 0, sizeof(buf));
         if (fd.read(buf, sizeof(buf)-1) > 0) {
             ret = strtoul(buf, nullptr, 10); // зачем тащить толстую функцию зря
-//            sscanf(buf, "%u", &ret);            
+//            sscanf(buf, "%u", &ret);
         }
-        fd.close();    
+        fd.close();
     }
     return ret;
 }
@@ -529,7 +530,7 @@ uint32_t DataFlash_File::_get_log_size(const uint16_t log_num) const
     free(fname);
 
     if(!fd) return 0;
-    
+
     uint32_t sz= fd.size();
     fd.close();
 
@@ -552,20 +553,20 @@ uint32_t DataFlash_File::_get_log_time(const uint16_t log_num) const
 
     uint16_t date=fno.fdate,
              time=fno.ftime;
-        
-    
+
+
     struct tm t;
-    
+
     t.tm_sec  = FAT_SECOND(time); //     seconds after the minute        0-61*
     t.tm_min  = FAT_MINUTE(time); //    minutes after the hour  0-59
     t.tm_hour = FAT_HOUR(time); //     hours since midnight    0-23
     t.tm_mday = FAT_DAY(date); //     day of the month        1-31
     t.tm_mon  = FAT_MONTH(date); //     months since January    0-11
-    t.tm_year = FAT_YEAR(date); //     years since 1900        
+    t.tm_year = FAT_YEAR(date); //     years since 1900
 //    t.tm_yday int     days since January 1    0-365
     t.tm_isdst =false;
 
-    
+
     return to_timestamp(&t);
 }
 
@@ -585,7 +586,7 @@ uint16_t DataFlash_File::_log_num_from_list_entry(const uint16_t list_entry)
     }
 
     uint32_t log_num = oldest_log + list_entry - 1;
-    
+
     if (log_num > MAX_LOG_FILES) {
         log_num -= MAX_LOG_FILES;
     }
@@ -648,7 +649,7 @@ int16_t DataFlash_File::get_log_data(const uint16_t list_entry, const uint16_t p
 
             printf("Log read open fail for %s: %s\n", fname, SD.strError(SD.lastError));
             free(fname);
-            return -1;            
+            return -1;
         }
         free(fname);
         _read_offset = 0;
@@ -776,7 +777,7 @@ uint16_t DataFlash_File::start_new_log(void)
             free(fname);
             break;
         }
-        
+
         // opening failed
         printf("Log open fail for %s: %s\n",fname, SD.strError(SD.lastError));
         free(fname);
@@ -786,9 +787,9 @@ uint16_t DataFlash_File::start_new_log(void)
                 printf("\nLoging aborted\n");
                 return 0xFFFF;
         }
-        
+
         log_num++;                          // if not at end - try to open next log
-            
+
         if (log_num >= MAX_LOG_FILES) {
             log_num = 1;
             if(was_ovf) {
@@ -819,6 +820,8 @@ uint16_t DataFlash_File::start_new_log(void)
     const ssize_t written = fd.write((uint8_t *)buf, to_write);
     fd.close();
 
+
+
     if (written < to_write) {
         return 0xFFFF;
     }
@@ -839,7 +842,7 @@ void DataFlash_File::_io_timer(void)
     if (nbytes == 0) {
         return;
     }
-    if (nbytes < _writebuf_chunk && 
+    if (nbytes < _writebuf_chunk &&
         tnow - _last_write_time < 2000UL) {
         // write in _writebuf_chunk-sized chunks, but always write at
         // least once per 2 seconds if data is available
@@ -864,7 +867,7 @@ void DataFlash_File::_io_timer(void)
             nbytes -= ofs;
         }
     }
-    
+
     if(nbytes==0) return;
 
     ssize_t nwritten = _write_fd.write(head, nbytes);
@@ -877,7 +880,7 @@ void DataFlash_File::_io_timer(void)
 #if defined(BOARD_DATAFLASH_FATFS)
         if(FR_INT_ERR == err || FR_NO_FILESYSTEM == err) { // internal error - bad filesystem
             gcs().send_text(MAV_SEVERITY_INFO, "Formatting DataFlash, please wait");
-            uint32_t t=AP_HAL::millis();            
+            uint32_t t=AP_HAL::millis();
             _busy = true; // format requires a long time and 1s task will kill process
             SD.format(_log_directory);
             _busy = false;
@@ -885,21 +888,21 @@ void DataFlash_File::_io_timer(void)
             start_new_log();            // re-open logging
             if(_write_fd) {             // success?
                 nwritten = _write_fd.write(head, nbytes); // ok, try to write again
-                if(nwritten>0) {                        // if ok 
+                if(nwritten>0) {                        // if ok
                     _write_offset += nwritten;          //   then mark data as written
                     _writebuf.advance(nwritten);
                     _write_fd.sync();                  //   and fix it on SD
-                    return; 
+                    return;
                 }
             }
-        } else 
+        } else
 #else
         if(FR_INT_ERR == err || FR_NO_FILESYSTEM == err || FR_INVALID_OBJECT == err) { // internal error - bad filesystem
             gcs().send_text(MAV_SEVERITY_INFO, "logging cancelled");
             _initialised = false;
             _open_error = true;
-        } else 
-                
+        } else
+
 #endif
         {
             _busy = true; // Prep_MinSpace requires a long time and 1s task will kill process
@@ -908,14 +911,14 @@ void DataFlash_File::_io_timer(void)
             start_new_log();             // re-open logging
             if(_write_fd) {             // success?
                 nwritten = _write_fd.write(head, nbytes); // ok, try to write again
-                if(nwritten>0) {                        // if ok 
+                if(nwritten>0) {                        // if ok
                     _write_offset += nwritten;          //   then mark data as written
                     _writebuf.advance(nwritten);
                     _write_fd.sync();                   //   and fix it on SD
-                    return; 
+                    return;
                 }
             }
-        }    
+        }
 
         _initialised = false;
     } else {
@@ -928,17 +931,17 @@ void DataFlash_File::_io_timer(void)
           write.
          */
         _write_fd.sync();
-        
+
 #if defined(BOARD_DATAFLASH_FATFS)    // limit file size in some MBytes and reopen new log file
 
         if(_write_fd.size() >= MAX_FILE_SIZE) { // size > 2M
-            stop_logging(); 
+            stop_logging();
             uint32_t t = AP_HAL::millis();
             _busy = true;
             Prep_MinSpace();
             _busy = false;
             printf("\nlog file reopened in %ldms\n", AP_HAL::millis() - t);
-            start_new_log();             // re-start logging        
+            start_new_log();             // re-start logging
         }
 #endif
     }
@@ -959,14 +962,14 @@ bool DataFlash_File::io_thread_alive() const
     uint32_t tnow = AP_HAL::millis();
     // if the io thread hasn't had a heartbeat in a 5 second then it is dead
     if(_io_timer_heartbeat + 5000 > tnow) return true;
-    
+
     return false;
 }
 
 bool DataFlash_File::logging_failed() const
 {
     bool op=false;
-    
+
     if(_write_fd) op=true;
 
     if (!op &&
@@ -997,25 +1000,25 @@ void DataFlash_File::vehicle_was_disarmed()
 }
 
 
- 
+
 /////////////////////////////////////////////////////////////////////
 //  функция конвертации между UNIX-временем и обычным представлением в виде даты и времени суток
 #define _TBIAS_DAYS             ((70 * (uint32_t)365) + 17)
 #define _TBIAS_SECS             (_TBIAS_DAYS * (xtime_t)86400)
 #define _TBIAS_YEAR             1900
 #define MONTAB(year)            ((((year) & 03) || ((year) == 0)) ? mos : lmos)
- 
+
 const uint16_t     lmos[] = {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
 const uint16_t     mos[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
- 
+
 #define Daysto32(year, mon)     (((year - 1) / 4) + MONTAB(year)[mon])
- 
+
 uint32_t DataFlash_File::to_timestamp(const struct tm *t)
 {       /* convert time structure to scalar time */
     int32_t           days;
     uint32_t          secs;
     int32_t           mon, year;
- 
+
     /* Calculate number of days. */
     mon = t->tm_mon - 1;
     year = t->tm_year - _TBIAS_YEAR;
@@ -1023,14 +1026,14 @@ uint32_t DataFlash_File::to_timestamp(const struct tm *t)
     days += 365 * year;
     days += t->tm_mday;
     days -= _TBIAS_DAYS;
- 
+
     /* Calculate number of seconds. */
     secs  = 3600 * t->tm_hour;
     secs += 60 * t->tm_min;
     secs += t->tm_sec;
- 
+
     secs += (days * (uint32_t)86400);
- 
+
     return (secs);
 }
 #endif
