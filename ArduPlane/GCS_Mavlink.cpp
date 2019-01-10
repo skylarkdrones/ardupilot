@@ -1573,7 +1573,7 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
         if((plane.pstart_time_unix<plane.curr_time_unix)&&(plane.curr_time_unix<plane.pend_time_unix))
         {
           gcs().send_text(MAV_SEVERITY_WARNING,"Time Check passed");
-          if(!(plane.geofence_breached()))
+          if(!(plane.geofence_breached()) && (plane.geofence_enabled()))
                 {
                   plane.authkey=true;
                   gcs().send_text(MAV_SEVERITY_WARNING,"Geofence check passed");
@@ -1598,6 +1598,13 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
     }
     else
       gcs().send_text(MAV_SEVERITY_WARNING,"Incorrect Device ID");
+      break;
+    }
+    case MAVLINK_MSG_ID_MAV2_TEST:
+    {
+      mavlink_mav2_test_t packet;
+      mavlink_msg_mav2_test_decode(msg, &packet);
+      gcs().send_text(MAV_SEVERITY_WARNING,"GOT THE MESSAGE");
       break;
     }
     case MAVLINK_MSG_ID_NO_FLY_POINT: {

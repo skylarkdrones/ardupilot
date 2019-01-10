@@ -364,14 +364,14 @@ void Plane::update_GPS_50Hz(void)
     have_position = ahrs.get_position(current_loc);
     ahrs.get_relative_position_D_home(relative_altitude);
     relative_altitude *= -1.0f;
-    // if((!(plane.pstart_time_unix<plane.curr_time_unix)||!(plane.curr_time_unix<plane.pend_time_unix))&&(plane.authkey))
-    // {
-    //   if(!plane.timebreachlogged)
-    //   {
-    //     gcs().send_text(MAV_SEVERITY_INFO, "Out of time period");
-    //     plane.timebreachlogged=true;
-    //   }
-    // }
+    if((!(plane.pstart_time_unix<plane.curr_time_unix)||!(plane.curr_time_unix<plane.pend_time_unix))&&(plane.authkey))
+    {
+      if(!plane.timebreachlogged)
+      {
+        gcs().send_text(MAV_SEVERITY_INFO, "TMEBRCH : Out of time period");
+        plane.timebreachlogged=true;
+      }
+    }
     gps.update();
 }
 
