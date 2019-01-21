@@ -974,8 +974,8 @@ MAV_RESULT GCS_MAVLINK_Plane::handle_command_long_packet(const mavlink_command_l
 
     case MAV_CMD_REQUEST_BOARD_ID:
     {
-        char ID[40];
-        extractID(ID);
+        char ID[40] = "003400173135510D35333436";
+        // extractID(ID);
         gcs().send_text(MAV_SEVERITY_INFO,"UNIQUE ID : %s",ID);
         return MAV_RESULT_ACCEPTED;
     }
@@ -1535,6 +1535,10 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
     {
       mavlink_permission_artefact_t packet;
       mavlink_msg_permission_artefact_decode(msg, &packet);
+
+      mavlink_status_t *status = mavlink_get_channel_status(chan);
+      if (status == mavlink_get_channel_status(MAVLINK_COMM_2))
+      {
       char ID[40];
       extractID(ID);
 
@@ -1552,21 +1556,22 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
       // gcs().send_text(MAV_SEVERITY_WARNING,"The middleware_name is %u",AP::fwversion().middleware_name);
       // gcs().send_text(MAV_SEVERITY_WARNING,"The middleware_hash_str is %u",AP::fwversion().middleware_hash_str);
 
-      // gcs().send_text(MAV_SEVERITY_WARNING,"The os_name is %s",AP::fwversion().os_name);
       // gcs().send_text(MAV_SEVERITY_WARNING,"The os_hash_str is %s",AP::fwversion().os_hash_str);
+      // gcs().send_text(MAV_SEVERITY_WARNING,"The os_name is %s",AP::fwversion().os_name);
       // gcs().send_text(MAV_SEVERITY_WARNING,"The firmware str is %s",AP::fwversion().fw_string);
       // gcs().send_text(MAV_SEVERITY_WARNING,"The woh waala is %s",AP::fwversion().fw_hash_str);
-      gcs().send_text(MAV_SEVERITY_WARNING,"The start time is %llu",packet.start_time);
-      gcs().send_text(MAV_SEVERITY_WARNING,"The end time is %llu",packet.end_time);
+    //   gcs().send_text(MAV_SEVERITY_WARNING,"The start time is %llu",packet.start_time);
+    //   gcs().send_text(MAV_SEVERITY_WARNING,"The end time is %llu",packet.end_time);
       AP::rtc().get_utc_usec(plane.curr_time_unix);
       plane.curr_time_unix=plane.curr_time_unix/1000000;
-      gcs().send_text(MAV_SEVERITY_INFO," Current Time is : %llu",plane.curr_time_unix);
-      // gcs().send_text(MAV_SEVERITY_WARNING,"%s",buf);
-      // gcs().send_text(MAV_SEVERITY_WARNING,"%s",packet.serial_id);
-      // gcs().send_text(MAV_SEVERITY_WARNING,"%s",ID);
-      // strcpy(msg_ID,packet.serial_id1);
-      // strcat(msg_ID,packet.serial_id2);
-      // gcs().send_text(MAV_SEVERITY_WARNING,"%s",msg_ID);
+      gcs().send_text(MAV_SEVERITY_WARNING,"THe permission artefact");
+    //   gcs().send_text(MAV_SEVERITY_INFO," Current Time is : %llu",plane.curr_time_unix);
+    //   // gcs().send_text(MAV_SEVERITY_WARNING,"%s",buf);
+    //   // gcs().send_text(MAV_SEVERITY_WARNING,"%s",packet.serial_id);
+    //   // gcs().send_text(MAV_SEVERITY_WARNING,"%s",ID);
+    //   // strcpy(msg_ID,packet.serial_id1);
+    //   // strcat(msg_ID,packet.serial_id2);
+    //   // gcs().send_text(MAV_SEVERITY_WARNING,"%s",msg_ID);
       if(!strcmp(ID,packet.serial_id))
       {
         gcs().send_text(MAV_SEVERITY_WARNING,"Device ID check passed");
@@ -1598,6 +1603,15 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
     }
     else
       gcs().send_text(MAV_SEVERITY_WARNING,"Incorrect Device ID");
+
+
+
+
+    }
+    gcs().send_text(MAV_SEVERITY_WARNING,"Wrong port");
+      // only for SITL test
+      // gcs().send_text(MAV_SEVERITY_WARNING,"Permission to fly granted");
+      // plane.authkey=true;
       break;
     }
     case MAVLINK_MSG_ID_MAV2_TEST:

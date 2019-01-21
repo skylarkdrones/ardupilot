@@ -68,7 +68,15 @@ void GCS_MAVLINK::handle_setup_signing(const mavlink_message_t *msg)
     // decode
     mavlink_setup_signing_t packet;
     mavlink_msg_setup_signing_decode(msg, &packet);
+    mavlink_status_t *status = mavlink_get_channel_status(chan);
+    if (status == mavlink_get_channel_status(MAVLINK_COMM_2)) {
+        // always accept channel 0, assumed to be secure channel. This
+        // is USB on PX4 boards
 
+
+
+
+    hal.console->printf("KEY printed");
     struct SigningKey key;
     key.magic = SIGNING_KEY_MAGIC;
     key.timestamp = packet.initial_timestamp;
@@ -81,6 +89,7 @@ void GCS_MAVLINK::handle_setup_signing(const mavlink_message_t *msg)
 
     // activate it immediately
     load_signing_key();
+  }
 }
 
 
@@ -93,14 +102,14 @@ static const uint32_t accept_list[] = {
     MAVLINK_MSG_ID_RADIO_STATUS,
     MAVLINK_MSG_ID_RADIO
 };
-    
+
 static bool accept_unsigned_callback(const mavlink_status_t *status, uint32_t msgId)
 {
-    if (status == mavlink_get_channel_status(MAVLINK_COMM_0)) {
-        // always accept channel 0, assumed to be secure channel. This
-        // is USB on PX4 boards
-        return true;
-    }
+    // if (status == mavlink_get_channel_status(MAVLINK_COMM_0)) {
+    //     // always accept channel 0, assumed to be secure channel. This
+    //     // is USB on PX4 boards
+    //     return true;
+    // }
     for (uint8_t i=0; i<ARRAY_SIZE(accept_list); i++) {
         if (accept_list[i] == msgId) {
             return true;
@@ -122,7 +131,7 @@ void GCS_MAVLINK::load_signing_key(void)
     mavlink_status_t *status = mavlink_get_channel_status(chan);
     if (status == nullptr) {
         hal.console->printf("Failed to load signing key - no status");
-        return;        
+        return;
     }
     memcpy(signing.secret_key, key.secret_key, 32);
     signing.link_id = (uint8_t)chan;
@@ -140,10 +149,11 @@ void GCS_MAVLINK::load_signing_key(void)
             all_zero = false;
         }
     }
-    
+
     // enable signing on all channels
     for (uint8_t i=0; i<MAVLINK_COMM_NUM_BUFFERS; i++) {
-        mavlink_status_t *cstatus = mavlink_get_channel_status((mavlink_channel_t)(MAVLINK_COMM_0 + i));
+        // mavlink_status_t *cstatus = mavlink_get_channel_status((mavlink_channel_t)(MAVLINK_COMM_0 + i));
+        mavlink_status_t *cstatus = mavlink_get_channel_status((mavlink_channel_t)(MAVLINK_COMM_2) );
         if (cstatus != nullptr) {
             if (all_zero) {
                 // disable signing
@@ -249,11 +259,10 @@ uint8_t GCS_MAVLINK::packet_overhead_chan(mavlink_channel_t chan)
     } else {
         reserve_param_space_start_ms = 0;
     }
-    
+
     const mavlink_status_t *status = mavlink_get_channel_status(chan);
     if (status->signing && (status->signing->flags & MAVLINK_SIGNING_FLAG_SIGN_OUTGOING)) {
         return MAVLINK_NUM_NON_PAYLOAD_BYTES + MAVLINK_SIGNATURE_BLOCK_LEN + reserved_space;
     }
     return MAVLINK_NUM_NON_PAYLOAD_BYTES + reserved_space;
 }
-
