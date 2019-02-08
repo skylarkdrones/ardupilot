@@ -974,8 +974,8 @@ MAV_RESULT GCS_MAVLINK_Plane::handle_command_long_packet(const mavlink_command_l
 
     case MAV_CMD_REQUEST_BOARD_ID:
     {
-        char ID[40] = "003400173135510D35333436";
-        // extractID(ID);
+        char ID[40];
+        extractID(ID);
         gcs().send_text(MAV_SEVERITY_INFO,"UNIQUE ID : %s",ID);
         return MAV_RESULT_ACCEPTED;
     }
@@ -1619,6 +1619,14 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
       mavlink_mav2_test_t packet;
       mavlink_msg_mav2_test_decode(msg, &packet);
       gcs().send_text(MAV_SEVERITY_WARNING,"GOT THE MESSAGE");
+      break;
+    }
+    case MAVLINK_MSG_ID_ECHO:
+    {
+      mavlink_echo_t packet;
+      mavlink_msg_echo_decode(msg, &packet);
+
+      gcs().send_text(MAV_SEVERITY_WARNING,"PIXHAWK:%s",packet.message);
       break;
     }
     case MAVLINK_MSG_ID_NO_FLY_POINT: {

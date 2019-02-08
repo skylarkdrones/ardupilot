@@ -677,7 +677,8 @@ AP_Arming::ArmingRequired AP_Arming::arming_required()
 
     // gcs().send_text(MAV_SEVERITY_INFO, "arming requir4e in ap_arming.cpp");
     // gcs().send_text(MAV_SEVERITY_INFO, "%d",(AP_Arming::ArmingRequired)require.get());
-    return ((AP_Arming::ArmingRequired)1);       // ALways set the value to 1. Typecasted value to meet the data type of the return type specified.
+    // return ((AP_Arming::ArmingRequired)1);       // ALways set the value to 1. Typecasted value to meet the data type of the return type specified.
+    return ((AP_Arming::ArmingRequired)require.get());
 }
 
 // Copter and sub share the same RC input limits
