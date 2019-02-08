@@ -1537,7 +1537,7 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
       mavlink_msg_permission_artefact_decode(msg, &packet);
 
       mavlink_status_t *status = mavlink_get_channel_status(chan);
-      if (status == mavlink_get_channel_status(MAVLINK_COMM_2))
+      if (status == mavlink_get_channel_status(MAVLINK_COMM_0))
       {
       char ID[40];
       extractID(ID);

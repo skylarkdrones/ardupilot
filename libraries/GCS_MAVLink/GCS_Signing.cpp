@@ -69,7 +69,7 @@ void GCS_MAVLINK::handle_setup_signing(const mavlink_message_t *msg)
     mavlink_setup_signing_t packet;
     mavlink_msg_setup_signing_decode(msg, &packet);
     mavlink_status_t *status = mavlink_get_channel_status(chan);
-    if (status == mavlink_get_channel_status(MAVLINK_COMM_2)) {
+    if (status == mavlink_get_channel_status(MAVLINK_COMM_0)) {
         // always accept channel 0, assumed to be secure channel. This
         // is USB on PX4 boards
 
@@ -153,7 +153,7 @@ void GCS_MAVLINK::load_signing_key(void)
     // enable signing on all channels
     for (uint8_t i=0; i<MAVLINK_COMM_NUM_BUFFERS; i++) {
         // mavlink_status_t *cstatus = mavlink_get_channel_status((mavlink_channel_t)(MAVLINK_COMM_0 + i));
-        mavlink_status_t *cstatus = mavlink_get_channel_status((mavlink_channel_t)(MAVLINK_COMM_2) );
+        mavlink_status_t *cstatus = mavlink_get_channel_status((mavlink_channel_t)(MAVLINK_COMM_0) );
         if (cstatus != nullptr) {
             if (all_zero) {
                 // disable signing
