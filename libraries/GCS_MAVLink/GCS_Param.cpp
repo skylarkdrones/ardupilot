@@ -45,7 +45,7 @@ GCS_MAVLINK::queued_param_send()
     if (_queued_parameter == nullptr) {
         return;
     }
-    
+
     uint16_t bytes_allowed;
     uint8_t count;
     uint32_t tnow = AP_HAL::millis();
@@ -215,7 +215,7 @@ void GCS_MAVLINK::handle_param_request_read(mavlink_message_t *msg)
         // we can't process this right now, drop it
         return;
     }
-    
+
     mavlink_param_request_read_t packet;
     mavlink_msg_param_request_read_decode(msg, &packet);
 
@@ -246,7 +246,7 @@ void GCS_MAVLINK::handle_param_set(mavlink_message_t *msg)
     mavlink_param_set_t packet;
     mavlink_msg_param_set_decode(msg, &packet);
     enum ap_var_type var_type;
-
+    gcs().send_text(MAV_SEVERITY_CRITICAL,"this %s",(char *)packet.param_id);
     // set parameter
     AP_Param *vp;
     char key[AP_MAX_NAME_SIZE+1];
@@ -390,7 +390,7 @@ void GCS_MAVLINK::param_io_timer(void)
         // no room
         return;
     }
-    
+
     if (!param_requests.pop(req)) {
         // nothing to do
         return;
@@ -430,12 +430,12 @@ void GCS_MAVLINK::param_io_timer(void)
 void GCS_MAVLINK::send_parameter_reply(void)
 {
     struct pending_param_reply reply;
-    
+
     if (!param_replies.pop(reply)) {
         // nothing to do
         return;
     }
-    
+
     mavlink_msg_param_value_send(
         reply.chan,
         reply.param_name,
