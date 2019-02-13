@@ -1541,42 +1541,20 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
       {
       char ID[40];
       extractID(ID);
-
-
+      plane.authkey = false;
+      plane.details_recieved = true;
+      strcpy(ID,plane.board_id);                     //extracting of board ID needs to be done on demnad.Dont save and let it float.
+      strcpy(packet.serial_id,plane.artefact_serial_id);
       plane.pstart_time_unix=packet.start_time;
       plane.pend_time_unix=packet.end_time;
       AP::rtc().get_utc_usec(plane.curr_time_unix);
       plane.curr_time_unix=plane.curr_time_unix/1000000;
-      if(!strcmp(ID,packet.serial_id))
-      {
-        gcs().send_text(MAV_SEVERITY_WARNING,"Device ID check passed");
-        if((plane.pstart_time_unix<plane.curr_time_unix)&&(plane.curr_time_unix<plane.pend_time_unix))
-        {
-          gcs().send_text(MAV_SEVERITY_WARNING,"Time Check passed");
-          if(!(plane.geofence_breached()) && (plane.geofence_enabled()))
-              {
-                plane.authkey=true;
-                gcs().send_text(MAV_SEVERITY_WARNING,"Geofence check passed");
-              }else
-                gcs().send_text(MAV_SEVERITY_INFO,"Geofence check failed");
-
-
+      gcs().send_text(MAV_SEVERITY_WARNING,"Recieved the permission details");
       }
       else
-        gcs().send_text(MAV_SEVERITY_WARNING,"Out of time frame");
-    }
-    else
-      gcs().send_text(MAV_SEVERITY_WARNING,"Incorrect Device ID");
-
-    }
-    else
-      gcs().send_text(MAV_SEVERITY_WARNING,"Wrong port");
-      // only for SITL test
-      // gcs().send_text(MAV_SEVERITY_WARNING,"Permission to fly granted");
-      // plane.authkey=true;
-      if(plane.authkey){
-      gcs().send_text(MAV_SEVERITY_WARNING,"Permission to fly granted");
-    }
+      {
+        gcs().send_text(MAV_SEVERITY_WARNING,"Wrong Port");
+      }
     break;
     }
     case MAVLINK_MSG_ID_MAV2_TEST:

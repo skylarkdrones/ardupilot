@@ -754,7 +754,42 @@ void Plane::change_arm_state(void)
  */
 bool Plane::arm_motors(const AP_Arming::ArmingMethod method, const bool do_arming_checks)
 {
-    if (!arming.arm(method, do_arming_checks,plane.authkey)) {
+  if(plane.details_recieved)
+  {
+  if(!strcmp(plane.board_id,plane.artefact_serial_id))
+  {
+    gcs().send_text(MAV_SEVERITY_WARNING,"Device ID check passed");
+    if((plane.pstart_time_unix<plane.curr_time_unix)&&(plane.curr_time_unix<plane.pend_time_unix))
+    {
+      gcs().send_text(MAV_SEVERITY_WARNING,"Time Check passed");
+      if(!(plane.geofence_breached()) && (plane.geofence_enabled()))
+          {
+            plane.authkey=true;                 // Check for redudndancy check in ap_arming.cpp ; use it in more places and more wisely
+            gcs().send_text(MAV_SEVERITY_WARNING,"Geofence check passed");
+          }
+      else {
+            gcs().send_text(MAV_SEVERITY_INFO,"Geofence check failed");
+            return false;
+          }
+
+    }
+    else{
+      gcs().send_text(MAV_SEVERITY_WARNING,"Out of time frame");
+      return false;
+    }
+  }
+  else
+  gcs().send_text(MAV_SEVERITY_WARNING,"Incorrect Device ID");
+  return false;
+  }
+  else{
+    gcs().send_text(MAV_SEVERITY_WARNING,"Permission artefact not send");
+    return false;
+  }
+
+
+
+    if (!arming.arm(method, do_arming_checks)) {
         return false;
     }
 

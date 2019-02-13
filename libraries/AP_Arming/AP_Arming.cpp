@@ -613,7 +613,7 @@ bool AP_Arming::arm_checks(ArmingMethod method)
 }
 
 //returns true if arming occurred successfully
-bool AP_Arming::arm(AP_Arming::ArmingMethod method, const bool do_arming_checks,bool initkey)
+bool AP_Arming::arm(AP_Arming::ArmingMethod method, const bool do_arming_checks)
 {
 
 #if APM_BUILD_TYPE(APM_BUILD_ArduCopter)
@@ -623,8 +623,7 @@ bool AP_Arming::arm(AP_Arming::ArmingMethod method, const bool do_arming_checks,
     if (armed) { //already armed
         return false;
     }
-if(initkey)
-  {
+
     //are arming checks disabled?
     if (!do_arming_checks || checks_to_perform == ARMING_CHECK_NONE) {
       gcs().send_text(MAV_SEVERITY_INFO, "Throttle armed");
@@ -643,10 +642,7 @@ if(initkey)
     } else {
         armed = false;
     }
-  }else{
-      gcs().send_text(MAV_SEVERITY_INFO, "No permission");
-      armed = false;
-    }
+
     return armed;
 
 #endif

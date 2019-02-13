@@ -159,8 +159,10 @@ public:
     friend class RC_Channels_Plane;
 
     Plane(void);
-
-    bool authkey=false;
+    char board_id[40];
+    bool authkey = false;
+    char artefact_serial_id[40];
+    bool details_recieved = false;
     bool timebreachlogged=false;
     uint64_t curr_time_unix;
     uint64_t pstart_time_unix;

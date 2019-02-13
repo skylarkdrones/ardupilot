@@ -246,7 +246,6 @@ void GCS_MAVLINK::handle_param_set(mavlink_message_t *msg)
     mavlink_param_set_t packet;
     mavlink_msg_param_set_decode(msg, &packet);
     enum ap_var_type var_type;
-    gcs().send_text(MAV_SEVERITY_CRITICAL,"this %s",(char *)packet.param_id);
     // set parameter
     AP_Param *vp;
     char key[AP_MAX_NAME_SIZE+1];

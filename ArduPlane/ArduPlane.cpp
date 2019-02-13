@@ -365,6 +365,7 @@ void Plane::update_GPS_50Hz(void)
       {
         gcs().send_text(MAV_SEVERITY_INFO, "TMEBRCH : Out of time period");
         plane.timebreachlogged=true;
+        plane.authkey = false;
       }
     }
     gps.update();
