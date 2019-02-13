@@ -615,7 +615,7 @@ bool AP_Arming::arm_checks(ArmingMethod method)
 //returns true if arming occurred successfully
 bool AP_Arming::arm(AP_Arming::ArmingMethod method, const bool do_arming_checks,bool initkey)
 {
-  gcs().send_text(MAV_SEVERITY_INFO, "AQrm function called");
+
 #if APM_BUILD_TYPE(APM_BUILD_ArduCopter)
     // Copter should never use this function
     return false;

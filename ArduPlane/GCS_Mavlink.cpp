@@ -1560,8 +1560,6 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
               }else
                 gcs().send_text(MAV_SEVERITY_INFO,"Geofence check failed");
 
-          gcs().send_text(MAV_SEVERITY_WARNING,"Permission to fly granted");
-
 
       }
       else
@@ -1570,16 +1568,16 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
     else
       gcs().send_text(MAV_SEVERITY_WARNING,"Incorrect Device ID");
 
-
-
-
     }
     else
       gcs().send_text(MAV_SEVERITY_WARNING,"Wrong port");
       // only for SITL test
       // gcs().send_text(MAV_SEVERITY_WARNING,"Permission to fly granted");
       // plane.authkey=true;
-      break;
+      if(plane.authkey){
+      gcs().send_text(MAV_SEVERITY_WARNING,"Permission to fly granted");
+    }
+    break;
     }
     case MAVLINK_MSG_ID_MAV2_TEST:
     {
