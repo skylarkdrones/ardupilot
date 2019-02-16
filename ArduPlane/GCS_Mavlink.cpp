@@ -1541,20 +1541,27 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
       {
       char ID[40];
       extractID(ID);
+      plane.timebreachlogged = false;
+      plane.timebreachcount = 0;
       plane.authkey = false;
       plane.details_recieved = true;
-      strcpy(ID,plane.board_id);                     //extracting of board ID needs to be done on demnad.Dont save and let it float.
-      strcpy(packet.serial_id,plane.artefact_serial_id);
-      plane.pstart_time_unix=packet.start_time;
+      strcpy(plane.board_id,ID);                     //extracting of board ID needs to be done on demnad.Dont save and let it float.
+      strcpy(plane.artefact_serial_id,packet.serial_id);
       plane.pend_time_unix=packet.end_time;
-      AP::rtc().get_utc_usec(plane.curr_time_unix);
+      plane.pstart_time_unix=packet.start_time;
+      AP::rtc().get_utc_usec(plane.curr_time_unix);   // remove this .redundamt
+
       plane.curr_time_unix=plane.curr_time_unix/1000000;
+
+
+
       gcs().send_text(MAV_SEVERITY_WARNING,"Recieved the permission details");
       }
       else
       {
         gcs().send_text(MAV_SEVERITY_WARNING,"Wrong Port");
       }
+
     break;
     }
     case MAVLINK_MSG_ID_MAV2_TEST:
@@ -1574,8 +1581,8 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
     }
     case MAVLINK_MSG_ID_NO_FLY_POINT: {
         mavlink_fence_point_t packet;
-        mavlink_msg_fence_point_decode(msg, &packet);
         // gcs().send_text(MAV_SEVERITY_INFO," Current Time is : %llu",packet.idx);
+        mavlink_msg_fence_point_decode(msg, &packet);
         // if (packet.idx>packet.count) {
         //     send_text(MAV_SEVERITY_WARNING,"Bad fence point");
         // } else if (!check_latlng(packet.lat,packet.lng)) {

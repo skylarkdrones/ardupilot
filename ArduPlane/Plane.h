@@ -160,6 +160,7 @@ public:
 
     Plane(void);
     char board_id[40];
+    int timebreachcount = 0;
     bool authkey = false;
     char artefact_serial_id[40];
     bool details_recieved = false;

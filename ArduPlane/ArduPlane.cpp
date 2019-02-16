@@ -359,14 +359,19 @@ void Plane::update_GPS_50Hz(void)
     have_position = ahrs.get_position(current_loc);
     ahrs.get_relative_position_D_home(relative_altitude);
     relative_altitude *= -1.0f;
-    if((!(plane.pstart_time_unix<plane.curr_time_unix)||!(plane.curr_time_unix<plane.pend_time_unix))&&(plane.authkey))
+    AP::rtc().get_utc_usec(plane.curr_time_unix);
+    plane.curr_time_unix=plane.curr_time_unix/1000000;
+
+    if((plane.curr_time_unix>plane.pend_time_unix)&&(plane.authkey))
     {
-      if(!plane.timebreachlogged)
+      if(plane.timebreachcount < 5)
       {
+
         gcs().send_text(MAV_SEVERITY_INFO, "TMEBRCH : Out of time period");
-        plane.timebreachlogged=true;
-        plane.authkey = false;
+        plane.timebreachcount++;
+
       }
+
     }
     gps.update();
 }

@@ -754,11 +754,16 @@ void Plane::change_arm_state(void)
  */
 bool Plane::arm_motors(const AP_Arming::ArmingMethod method, const bool do_arming_checks)
 {
+  AP::rtc().get_utc_usec(plane.curr_time_unix);
+  plane.curr_time_unix=plane.curr_time_unix/1000000;
   if(plane.details_recieved)
   {
+
+    // gcs().send_text(MAV_SEVERITY_WARNING,"result ",strcmp(plane.board_id,plane.artefact_serial_id));
   if(!strcmp(plane.board_id,plane.artefact_serial_id))
   {
     gcs().send_text(MAV_SEVERITY_WARNING,"Device ID check passed");
+    gcs().send_text(MAV_SEVERITY_WARNING,"time check result %d",(plane.pstart_time_unix<plane.curr_time_unix)&&(plane.curr_time_unix<plane.pend_time_unix));
     if((plane.pstart_time_unix<plane.curr_time_unix)&&(plane.curr_time_unix<plane.pend_time_unix))
     {
       gcs().send_text(MAV_SEVERITY_WARNING,"Time Check passed");
@@ -778,9 +783,10 @@ bool Plane::arm_motors(const AP_Arming::ArmingMethod method, const bool do_armin
       return false;
     }
   }
-  else
+  else{
   gcs().send_text(MAV_SEVERITY_WARNING,"Incorrect Device ID");
   return false;
+}
   }
   else{
     gcs().send_text(MAV_SEVERITY_WARNING,"Permission artefact not send");
