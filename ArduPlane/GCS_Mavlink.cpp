@@ -1537,7 +1537,7 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
       mavlink_msg_permission_artefact_decode(msg, &packet);
 
       mavlink_status_t *status = mavlink_get_channel_status(chan);
-      if (status == mavlink_get_channel_status(MAVLINK_COMM_0))
+      if (status == mavlink_get_channel_status(MAVLINK_COMM_4))
       {
       char ID[40];
       extractID(ID);
@@ -1576,7 +1576,7 @@ void GCS_MAVLINK_Plane::handleMessage(mavlink_message_t* msg)
       mavlink_echo_t packet;
       mavlink_msg_echo_decode(msg, &packet);
 
-      gcs().send_text(MAV_SEVERITY_WARNING,"PIXHAWK:%s",packet.message);
+      gcs().send_text(MAV_SEVERITY_WARNING,"RFM:%s",packet.message);
       break;
     }
     case MAVLINK_MSG_ID_NO_FLY_POINT: {
