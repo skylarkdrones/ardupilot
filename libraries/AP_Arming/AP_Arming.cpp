@@ -41,7 +41,7 @@ const AP_Param::GroupInfo AP_Arming::var_info[] = {
     // @Description: Arming disabled until some requirements are met. If 0, there are no requirements (arm immediately).  If 1, require rudder stick or GCS arming before arming motors and sends the minimum throttle PWM value to the throttle channel when disarmed.  If 2, require rudder stick or GCS arming and send 0 PWM to throttle channel when disarmed. See the ARMING_CHECK_* parameters to see what checks are done before arming. Note, if setting this parameter to 0 a reboot is required to arm the plane.  Also note, even with this parameter at 0, if ARMING_CHECK parameter is not also zero the plane may fail to arm throttle at boot due to a pre-arm check failure.
     // @Values: 0:Disabled,1:THR_MIN PWM when disarmed,2:0 PWM when disarmed
     // @User: Advanced
-    AP_GROUPINFO_FLAGS_FRAME("REQUIRE",     0,      AP_Arming,  require,                 1,
+    AP_GROUPINFO_FLAGS_FRAME("REQUIRE",     1,      AP_Arming,  require,                 1,
                              AP_PARAM_NO_SHIFT,
                              AP_PARAM_FRAME_PLANE | AP_PARAM_FRAME_ROVER),
 
@@ -96,7 +96,7 @@ uint16_t AP_Arming::compass_magfield_expected() const
 
 bool AP_Arming::is_armed()
 {
-    return (ArmingRequired)require.get() == NO || armed;
+    return armed;
 }
 
 uint16_t AP_Arming::get_enabled_checks()
@@ -615,6 +615,7 @@ bool AP_Arming::arm_checks(ArmingMethod method)
 //returns true if arming occurred successfully
 bool AP_Arming::arm(AP_Arming::ArmingMethod method, const bool do_arming_checks,bool initkey)
 {
+
 #if APM_BUILD_TYPE(APM_BUILD_ArduCopter)
     // Copter should never use this function
     return false;
@@ -626,8 +627,8 @@ if(initkey)
   {
     //are arming checks disabled?
     if (!do_arming_checks || checks_to_perform == ARMING_CHECK_NONE) {
+      gcs().send_text(MAV_SEVERITY_INFO, "Throttle armed");
         armed = true;
-        gcs().send_text(MAV_SEVERITY_INFO, "Throttle armed");
         return true;
     }
 
@@ -678,6 +679,7 @@ AP_Arming::ArmingRequired AP_Arming::arming_required()
     // gcs().send_text(MAV_SEVERITY_INFO, "arming requir4e in ap_arming.cpp");
     // gcs().send_text(MAV_SEVERITY_INFO, "%d",(AP_Arming::ArmingRequired)require.get());
     return ((AP_Arming::ArmingRequired)1);       // ALways set the value to 1. Typecasted value to meet the data type of the return type specified.
+    // return ((AP_Arming::ArmingRequired)require.get());
 }
 
 // Copter and sub share the same RC input limits

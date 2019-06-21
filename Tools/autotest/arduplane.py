@@ -362,7 +362,7 @@ class AutoTestPlane(AutoTest):
                 type_mask = 0b10000001 ^ 0xFF # FIXME
                 # attitude in radians:
                 q = quaternion.Quaternion([math.radians(target_roll_degrees),
-                                           0 ,
+                                           0,
                                            0])
                 roll_rate_radians = 0.5
                 pitch_rate_radians = 0
@@ -562,10 +562,10 @@ class AutoTestPlane(AutoTest):
             self.set_parameter("SERVO%u_MAX" % servo_ch, servo_ch_max)
             self.set_parameter("SERVO%u_TRIM" % servo_ch, servo_ch_trim)
 
-            # check flaps are not deployed:
+            self.progress("check flaps are not deployed")
             self.set_rc(flaps_ch, flaps_ch_min)
             self.wait_servo_channel_value(servo_ch, servo_ch_min)
-            # deploy the flaps:
+            self.progress("deploy the flaps")
             self.set_rc(flaps_ch, flaps_ch_max)
             tstart = self.get_sim_time()
             self.wait_servo_channel_value(servo_ch, servo_ch_max)
@@ -576,7 +576,7 @@ class AutoTestPlane(AutoTest):
             if delta_time < delta_time_min or delta_time > delta_time_max:
                 raise NotAchievedException((
                     "Flaps Slew not working (%f seconds)" % (delta_time,)))
-            # undeploy flaps:
+            self.progress("undeploy flaps")
             self.set_rc(flaps_ch, flaps_ch_min)
             self.wait_servo_channel_value(servo_ch, servo_ch_min)
 
@@ -594,14 +594,13 @@ class AutoTestPlane(AutoTest):
                 m = self.mav.recv_match(type='MISSION_CURRENT', blocking=True)
                 time_delta = (self.get_sim_time_cached() -
                               last_mission_current_msg)
-                if (time_delta >1 or
-                    m.seq != last_seq):
+                if (time_delta > 1 or m.seq != last_seq):
                     dist = None
                     x = self.mav.messages.get("NAV_CONTROLLER_OUTPUT", None)
                     if x is not None:
                         dist = x.wp_dist
                     self.progress("MISSION_CURRENT.seq=%u (dist=%s)" %
-                                  (m.seq,str(dist)))
+                                  (m.seq, str(dist)))
                     last_mission_current_msg = self.get_sim_time_cached()
                     last_seq = m.seq
             # flaps should undeploy at the end
@@ -767,6 +766,6 @@ class AutoTestPlane(AutoTest):
             self.progress("FAILED: %s" % self.fail_list)
             return False
 
-        self.progress("Max set_rc_timeout=%s" % self.max_set_rc_timeout);
+        self.progress("Max set_rc_timeout=%s" % self.max_set_rc_timeout)
 
         return True
