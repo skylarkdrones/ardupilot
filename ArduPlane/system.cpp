@@ -789,7 +789,7 @@ bool Plane::arm_motors(const AP_Arming::ArmingMethod method, const bool do_armin
 }
   }
   else{
-    gcs().send_text(MAV_SEVERITY_WARNING,"Permission artefact not send");
+    gcs().send_text(MAV_SEVERITY_WARNING,"No Permission artefact");
     return false;
   }
 
